@@ -1,0 +1,43 @@
+# ─── Java / Maven ────────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+
+# Maven wrapper
+.mvn/
+mvn
+mvnw.cmd
+
+# ─── IDEs ────────────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.eclipse/
+.classpath
+.project
+.settings/
+*.code-workspace
+.vscode/
+
+# ─── OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Logs e temporários ──────────────────────────────────────
+*.log
+logs/
+*.tmp
+*.swp
+
+# ─── Docker ──────────────────────────────────────────────────
+# (docker-compose.override.yml pode conter segredos locais)
+docker-compose.override.yml
+
+# ─── Documentação local (PDFs, DOCX) ─────────────────────────
+# Mantida local — não sobe pro repositório remoto
+condominio_service/docs/
