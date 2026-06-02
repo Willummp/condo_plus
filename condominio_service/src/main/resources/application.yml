@@ -1,0 +1,92 @@
+server:
+  port: 8082  # porta fixa do condominio-service conforme arquitetura
+
+spring:
+  application:
+    name: condominio-service  # nome registrado no Eureka
+
+  datasource:
+    # currentSchema=condominio garante que queries sem schema explícito
+    # caiam no schema correto. Evita acesso acidental a outros schemas.
+    url: jdbc:postgresql://localhost:5432/condoplus?currentSchema=condominio
+    username: ${CONDOMINIO_DB_USER:condominio_user}
+    password: ${CONDOMINIO_DB_PASSWORD:condominio_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  # ─── Spring Data JDBC ───────────────────────────────────────
+  # NÃO há spring.jpa aqui — usamos JDBC, não JPA!
+  data:
+    jdbc:
+      dialect: postgresql
+
+  sql:
+    init:
+      mode: never  # Flyway cuida das migrations, não o Spring Boot
+
+  # ─── Flyway ─────────────────────────────────────────────────
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: condominio
+    default-schema: condominio
+    baseline-on-migrate: true
+
+# ─── Eureka Client ──────────────────────────────────────────────
+# Registra este serviço no Discovery Server para que outros
+# serviços possam descobri-lo pelo nome lógico "condominio-service"
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.uuid}
+
+# ─── Actuator ───────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# ─── Resilience4j — Circuit Breaker para o iam-service ──────────
+# Parâmetros da Seção 13.5 do Plano de Execução
+resilience4j:
+  circuitbreaker:
+    instances:
+      iamService:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10        # janela das últimas 10 chamadas
+        minimumNumberOfCalls: 5      # só calcula taxa após 5 chamadas
+        failureRateThreshold: 50     # abre se 50%+ falhar
+        waitDurationInOpenState: 30s # fica OPEN por 30s antes de HALF-OPEN
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  timelimiter:
+    instances:
+      iamService:
+        timeoutDuration: 3s  # max 3s para o IAM responder (UX exige resposta rápida)
+        cancelRunningFuture: true
+
+# ─── Propriedades customizadas ──────────────────────────────────
+condoplus:
+  iam:
+    base-url: lb://iam-service  # nome lógico no Eureka
+
+# ─── Logging ────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.condoplus.condominio: DEBUG
+    org.springframework.jdbc.core: INFO    # mudar para DEBUG para ver SQL
+    io.github.resilience4j: DEBUG
