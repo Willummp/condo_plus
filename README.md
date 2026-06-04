@@ -107,20 +107,35 @@ Para evitar falhas em cascata na chamada síncrona do `condominio-service` para 
 
 ---
 
-## 📡 Exemplos de Requisições
+## 📡 Guia de Referência de APIs (condominio-service)
 
-### 1. Criar uma nova Unidade (via Gateway)
+Todas as requisições abaixo devem ser feitas através do **API Gateway** na porta **8080**, utilizando o prefixo `/api/condominio`.
+
+### 🏢 1. Unidades (`/api/condominio/unidades`)
+
+#### Criar Unidade
 * **Rota:** `POST http://localhost:8080/api/condominio/unidades`
 * **Body:**
   ```json
   {
     "numero": "202",
     "bloco": "B",
-    "tipo": "APARTAMENTO"
+    "tipo": "APARTAMENTO",
+    "area_m2": 72.5
   }
   ```
 
-### 2. Cadastrar uma Pessoa e solicitar credencial (integração síncrona com IAM via Gateway)
+#### Listar Todas as Unidades
+* **Rota:** `GET http://localhost:8080/api/condominio/unidades`
+
+#### Buscar Unidade por ID
+* **Rota:** `GET http://localhost:8080/api/condominio/unidades/{unidadeId}`
+
+---
+
+### 👥 2. Pessoas (`/api/condominio/pessoas`)
+
+#### Cadastrar Pessoa e Criar Credenciais no IAM
 * **Rota:** `POST http://localhost:8080/api/condominio/pessoas`
 * **Body:**
   ```json
@@ -130,6 +145,151 @@ Para evitar falhas em cascata na chamada síncrona do `condominio-service` para 
     "senhaInicial": "senhaForte123",
     "documento": "98765432100",
     "telefone": "21988887777",
+    "emailContato": "carlos.contato@email.com",
     "role": "MORADOR"
+  }
+  ```
+
+#### Buscar Pessoa por ID
+* **Rota:** `GET http://localhost:8080/api/condominio/pessoas/{pessoaId}`
+
+#### Buscar Pessoa por CPF
+* **Rota:** `GET http://localhost:8080/api/condominio/pessoas?cpf=98765432100`
+
+---
+
+### 🔗 3. Vinculações (`/api/condominio/unidades/{id}/vinculacoes`)
+
+#### Criar Vinculação (Calcula escopos automaticamente)
+* **Rota:** `POST http://localhost:8080/api/condominio/unidades/{unidadeId}/vinculacoes`
+* **Body:**
+  ```json
+  {
+    "pessoaId": "uuid-da-pessoa",
+    "tipo": "RESIDENTE",
+    "dataInicio": "2026-06-01"
+  }
+  ```
+
+#### Listar Vinculações de uma Unidade
+* **Rota:** `GET http://localhost:8080/api/condominio/unidades/{unidadeId}/vinculacoes?apenasAtivas=true`
+
+#### Encerrar Vinculação
+* **Rota:** `PATCH http://localhost:8080/api/condominio/vinculacoes/{vinculacaoId}/encerrar`
+* **Body:**
+  ```json
+  {
+    "dataFim": "2026-12-31"
+  }
+  ```
+
+---
+
+### 🚗 4. Veículos (`/api/condominio/unidades/{id}/veiculos`)
+
+#### Cadastrar Veículo em uma Unidade
+* **Rota:** `POST http://localhost:8080/api/condominio/unidades/{unidadeId}/veiculos`
+* **Body:**
+  ```json
+  {
+    "placa": "ABC1D23",
+    "modelo": "Gol",
+    "cor": "Branco",
+    "proprietarioPessoaId": "uuid-da-pessoa"
+  }
+  ```
+
+#### Listar Veículos de uma Unidade
+* **Rota:** `GET http://localhost:8080/api/condominio/unidades/{unidadeId}/veiculos`
+
+---
+
+### 💼 5. Funcionários (`/api/condominio/funcionarios`)
+
+#### Cadastrar Funcionário
+* **Rota:** `POST http://localhost:8080/api/condominio/funcionarios`
+* **Body:**
+  ```json
+  {
+    "pessoaId": "uuid-da-pessoa",
+    "cargo": "PORTEIRO",
+    "dataAdmissao": "2026-01-15"
+  }
+  ```
+
+#### Listar Funcionários
+* **Rota:** `GET http://localhost:8080/api/condominio/funcionarios?cargo=PORTEIRO`
+
+---
+
+### 📣 6. Comunicados (`/api/condominio/comunicados`)
+
+#### Publicar Comunicado (Apenas Síndico)
+* **Rota:** `POST http://localhost:8080/api/condominio/comunicados`
+* **Body:**
+  ```json
+  {
+    "titulo": "Manutenção no Elevador",
+    "conteudo": "O elevador do Bloco A ficará indisponível na segunda-feira pela manhã.",
+    "visibilidade": "TODOS"
+  }
+  ```
+
+#### Listar Comunicados
+* **Rota:** `GET http://localhost:8080/api/condominio/comunicados?visibilidade=TODOS`
+
+---
+
+### ⚠️ 7. Multas (`/api/condominio/unidades/{id}/multas`)
+
+#### Aplicar Multa a uma Unidade
+* **Rota:** `POST http://localhost:8080/api/condominio/unidades/{unidadeId}/multas`
+* **Body:**
+  ```json
+  {
+    "descricao": "Uso indevido das áreas comuns",
+    "valor": 150.00,
+    "categoria": "CONVIVENCIA",
+    "dataVencimento": "2026-07-01"
+  }
+  ```
+
+#### Listar Multas de uma Unidade
+* **Rota:** `GET http://localhost:8080/api/condominio/unidades/{unidadeId}/multas?status=PENDENTE`
+
+#### Atualizar Status de uma Multa
+* **Rota:** `PATCH http://localhost:8080/api/condominio/multas/{multaId}/status`
+* **Body:**
+  ```json
+  {
+    "status": "PAGA"
+  }
+  ```
+
+---
+
+### 🏊 8. Áreas Comuns e Reservas
+
+#### Cadastrar Área Comum
+* **Rota:** `POST http://localhost:8080/api/condominio/areas-comuns`
+* **Body:**
+  ```json
+  {
+    "nome": "Churrasqueira A",
+    "descricao": "Espaço com churrasqueira e freezer",
+    "capacidadeMaxima": 25,
+    "regras": "Uso permitido das 09:00 às 22:00."
+  }
+  ```
+
+#### Criar Reserva de Área Comum (Evita conflito de data/horário)
+* **Rota:** `POST http://localhost:8080/api/condominio/reservas`
+* **Body:**
+  ```json
+  {
+    "areaComumId": "uuid-da-area-comum",
+    "dataReserva": "2026-06-15",
+    "horaInicio": "12:00",
+    "horaFim": "18:00"
   }
   ```
