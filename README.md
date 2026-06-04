@@ -57,13 +57,8 @@ O API Gateway roda na porta **8080** como ponto único de entrada da aplicação
 
 ---
 
-## 💾 Persistência de Dados e Banco Não Relacional (NoSQL)
-Cada microsserviço gerencia seus próprios dados de forma isolada através de databases ou schemas PostgreSQL separados (`condominio`, `iam`, `portaria`).
-
-### 🍃 Análise de Uso de Banco Não Relacional (NoSQL)
-Como proposta de evolução para persistência poliglota na arquitetura Condo+, identificou-se que o microsserviço de suporte **`auditoria-service`** seria um excelente candidato para a adoção de um banco de dados não relacional (NoSQL), como o **MongoDB**:
-* **Estrutura Flexível de Documentos:** Os logs de auditoria possuem dados de naturezas muito diferentes dependendo da operação realizada. Um banco NoSQL de documentos permite armazenar esses payloads flexíveis no formato JSON sem a necessidade de migrações estruturais rígidas de tabelas.
-* **Escrita de Alto Desempenho:** O serviço de auditoria é extremamente intensivo em operações de gravação (Write-Heavy) e não necessita de transações relacionais complexas (Joins/ACID), o que se alinha perfeitamente com os pontos fortes do MongoDB.
+## 💾 Persistência de Dados
+Cada microsserviço gerencia seus próprios dados de forma isolada através de databases ou schemas PostgreSQL separados (`condominio`, `iam`, `portaria`, `notificacao`, `auditoria`).
 
 ---
 
