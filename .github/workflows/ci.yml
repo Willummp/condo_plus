@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: Condo+ CI — TP1
 
 on:
   push:
@@ -11,20 +11,21 @@ on:
 
 jobs:
   build:
-    name: Build and Test
+    name: Build & Test (condominio-service)
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Setup JDK 21 (Temurin)
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Build and Run Tests
+      - name: Build & Run Test Suite (condominio-service)
         run: |
           mvn clean test
+
