@@ -107,11 +107,13 @@ Para evitar falhas em cascata na chamada síncrona do `condominio-service` para 
 
 ---
 
-## 📡 Guia de Referência de APIs (condominio-service)
+## 📡 Guia de Referência de APIs do Ecossistema
 
-Todas as requisições abaixo devem ser feitas através do **API Gateway** na porta **8080**, utilizando o prefixo `/api/condominio`.
+Esta seção serve como repositório de documentação de endpoints expostos no API Gateway (porta `8080`).
 
-### 🏢 1. Unidades (`/api/condominio/unidades`)
+### 🏢 1. condominio-service (Prefix: `/api/condominio`)
+
+#### 🏢 1.1 Unidades (`/api/condominio/unidades`)
 
 #### Criar Unidade
 * **Rota:** `POST http://localhost:8080/api/condominio/unidades`
@@ -292,4 +294,64 @@ Todas as requisições abaixo devem ser feitas através do **API Gateway** na po
     "horaInicio": "12:00",
     "horaFim": "18:00"
   }
+  ```
+
+---
+
+### 🔑 2. iam-service (Espaço Reservado)
+* **Desenvolvedor Responsável:** Integrante 2
+* **Caminho Base no Gateway:** `/api/iam/**`
+
+> [!NOTE]
+> Espaço reservado para o desenvolvedor do `iam-service` documentar suas rotas e payloads (ex: registro de credenciais, login, validação de tokens).
+
+* **Exemplo de Rota:** `POST http://localhost:8080/api/iam/...`
+* **Exemplo de Payload:**
+  ```json
+  {}
+  ```
+
+---
+
+### 🚪 3. portaria-service (Espaço Reservado)
+* **Desenvolvedor Responsável:** Integrante 3
+* **Caminho Base no Gateway:** `/api/portaria/**`
+
+> [!NOTE]
+> Espaço reservado para o desenvolvedor do `portaria-service` documentar suas rotas e payloads (ex: encomendas recebidas, liberação de visitantes/prestadores).
+
+* **Exemplo de Rota:** `POST http://localhost:8080/api/portaria/...`
+* **Exemplo de Payload:**
+  ```json
+  {}
+  ```
+
+---
+
+### 🔔 4. notificacao-service (Espaço Reservado)
+* **Desenvolvedor Responsável:** Integrante 4
+* **Caminho Base no Gateway:** `/api/notificacoes/**`
+
+> [!NOTE]
+> Espaço reservado para o desenvolvedor do `notificacao-service` documentar suas rotas e payloads (ex: disparo de alertas, emails, sms e logs).
+
+* **Exemplo de Rota:** `POST http://localhost:8080/api/notificacoes/...`
+* **Exemplo de Payload:**
+  ```json
+  {}
+  ```
+
+---
+
+### 📊 5. auditoria-service (Espaço Reservado)
+* **Desenvolvedor Responsável:** Integrante 5
+* **Caminho Base no Gateway:** `/api/auditoria/**`
+
+> [!NOTE]
+> Espaço reservado para o desenvolvedor do `auditoria-service` documentar suas rotas e payloads (ex: gravação e consulta de logs estruturados de auditoria).
+
+* **Exemplo de Rota:** `POST http://localhost:8080/api/auditoria/...`
+* **Exemplo de Payload:**
+  ```json
+  {}
   ```
