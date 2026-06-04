@@ -40,8 +40,8 @@ A arquitetura do Condo+ é construída sobre microsserviços desacoplados e resi
  (Porta 8082)    (Porta 8081)     (Porta 8083)    (Porta 8084)
        │               │               │               │
        ▼               ▼               ▼               ▼
-  PostgreSQL      PostgreSQL      PostgreSQL        MongoDB
- (Schema condo)  (Schema iam)    (Schema port)     (NoSQL)
+  PostgreSQL      PostgreSQL      PostgreSQL      PostgreSQL
+ (Schema condo)  (Schema iam)    (Schema port)   (Schema notif)
 ```
 
 ### 📡 Discovery Server (Eureka Server)
@@ -60,11 +60,10 @@ O API Gateway roda na porta **8080** como ponto único de entrada da aplicação
 ## 💾 Persistência de Dados e Banco Não Relacional (NoSQL)
 Cada microsserviço gerencia seus próprios dados de forma isolada através de databases ou schemas PostgreSQL separados (`condominio`, `iam`, `portaria`).
 
-### 🍃 Justificativa do Banco Não Relacional (NoSQL)
-O microsserviço **`notificacao-service`** utilizará o **MongoDB** como banco de dados principal.
-* **Por que MongoDB?** Notificações enviadas aos moradores possuem estruturas altamente heterogêneas (e-mails com templates HTML complexos, SMSs contendo caracteres puros limitados, push notifications com payloads JSON específicos para dispositivos móveis).
-* **Ausência de Transações Ácidas Relacionais:** O envio e histórico de notificações não requerem chaves estrangeiras rígidas ou joins complexos. O armazenamento em formato de documento flexível (JSON) permite evoluir a estrutura da notificação sem a necessidade de realizar alterações custosas de schema (migrations).
-* **Performance:** MongoDB favorece a inserção veloz e a leitura de documentos de histórico por ID do morador.
+### 🍃 Análise de Uso de Banco Não Relacional (NoSQL)
+Como proposta de evolução para persistência poliglota na arquitetura Condo+, identificou-se que microsserviços de suporte como o **`auditoria-service`** ou o **`notificacao-service`** seriam excelentes candidatos para a adoção de banco de dados não relacional (NoSQL), como o **MongoDB**:
+* **Estrutura Flexível de Documentos:** Mensagens de notificações enviadas (e-mail, SMS, push) ou logs de auditoria possuem dados de naturezas muito diferentes. Um banco NoSQL de documentos permite armazenar esses payloads flexíveis no formato JSON sem a necessidade de migrações estruturais rígidas de tabelas.
+* **Escrita de Alto Desempenho:** Serviços de auditoria e de envio de notificações são intensivos em operações de gravação (Write-Heavy) e não necessitam de transações relacionais complexas (Joins/ACID), o que se alinha perfeitamente com os pontos fortes do MongoDB.
 
 ---
 
