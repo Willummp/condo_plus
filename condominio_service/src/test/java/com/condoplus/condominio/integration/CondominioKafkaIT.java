@@ -1,11 +1,17 @@
 package com.condoplus.condominio.integration;
 
 import com.condoplus.condominio.event.ComunicadoPublicadoEvent;
+import com.condoplus.condominio.event.CredencialCriadaEvent;
+import com.condoplus.condominio.event.MultaAplicadaEvent;
+import com.condoplus.condominio.event.ReservaConfirmadaEvent;
+import com.condoplus.condominio.estrutura.domain.Pessoa;
+import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import com.condoplus.condominio.producer.CondominioEventProducer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -18,8 +24,16 @@ import org.testcontainers.utility.DockerImageName;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+/**
+ * Testes de integração do Kafka utilizando Testcontainers (tp2).
+ * 
+ * <p>Valida o fluxo assíncrono de mensageria: publicação de eventos de negócio e consumo
+ * de eventos externos (como criação de credenciais pelo IAM), aplicando regras de idempotência.
+ */
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("test")
@@ -45,9 +59,15 @@ public class CondominioKafkaIT {
     @Autowired
     private CondominioEventProducer eventProducer;
 
+    @Autowired
+    private PessoaRepository pessoaRepository;
+
+    @Autowired
+    private KafkaTemplate<String, Object> kafkaTemplate;
+
     @Test
-    @DisplayName("Deve publicar evento de ComunicadoPublicado com sucesso no Kafka de teste")
-    void devePublicarEventoKafka() {
+    @DisplayName("Deve publicar evento de ComunicadoPublicado com sucesso no Kafka de teste [tp2]")
+    void devePublicarEventoComunicado() {
         ComunicadoPublicadoEvent event = new ComunicadoPublicadoEvent(
                 UUID.randomUUID(),
                 "Aviso Teste",
@@ -57,7 +77,85 @@ public class CondominioKafkaIT {
                 "corr-123"
         );
 
-        // Apenas garantimos que a publicação não lança exceção com o container Kafka rodando
         assertDoesNotThrow(() -> eventProducer.publicarComunicado(event));
+    }
+
+    @Test
+    @DisplayName("Deve publicar evento de MultaAplicada com sucesso no Kafka de teste [tp2]")
+    void devePublicarEventoMulta() {
+        MultaAplicadaEvent event = new MultaAplicadaEvent(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "Barulho",
+                new java.math.BigDecimal("150.00"),
+                LocalDateTime.now(),
+                "corr-456"
+        );
+
+        assertDoesNotThrow(() -> eventProducer.publicarMulta(event));
+    }
+
+    @Test
+    @DisplayName("Deve publicar evento de ReservaConfirmada com sucesso no Kafka de teste [tp2]")
+    void devePublicarEventoReserva() {
+        ReservaConfirmadaEvent event = new ReservaConfirmadaEvent(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                java.time.LocalDate.now(),
+                java.time.LocalTime.of(10, 0),
+                java.time.LocalTime.of(12, 0),
+                "corr-789"
+        );
+
+        assertDoesNotThrow(() -> eventProducer.publicarReserva(event));
+    }
+
+    @Test
+    @DisplayName("Deve consumir evento de CredencialCriada e persistir Pessoa de forma idempotente [tp2]")
+    void deveConsumirCredencialCriadaEPersistirPessoa() throws Exception {
+        UUID credencialId = UUID.randomUUID();
+        String documento = "12345678909";
+        CredencialCriadaEvent event = new CredencialCriadaEvent(
+                credencialId,
+                "user@test.com",
+                documento,
+                "User Test",
+                "11988887777",
+                "MORADOR",
+                "corr-abc"
+        );
+
+        // Publica no tópico de credenciais criadas
+        kafkaTemplate.send("credenciais.criadas", credencialId.toString(), event).get(5, SECONDS);
+
+        // Aguarda a persistência assíncrona
+        boolean salva = false;
+        for (int i = 0; i < 50; i++) {
+            if (pessoaRepository.existsByDocumento(documento)) {
+                salva = true;
+                break;
+            }
+            Thread.sleep(100);
+        }
+
+        assertThat(salva).isTrue();
+
+        Pessoa pessoa = pessoaRepository.findByDocumento(documento).orElseThrow();
+        assertThat(pessoa.getCredencialId()).isEqualTo(credencialId);
+        assertThat(pessoa.getNomeCompleto()).isEqualTo("User Test");
+
+        // Testar Idempotência: enviar novamente o mesmo evento
+        assertDoesNotThrow(() -> {
+            kafkaTemplate.send("credenciais.criadas", credencialId.toString(), event).get(5, SECONDS);
+        });
+
+        // Aguarda um tempo de propagação e garante que não duplicou
+        Thread.sleep(500);
+        long count = java.util.stream.StreamSupport.stream(pessoaRepository.findAll().spliterator(), false)
+                .filter(p -> p.getDocumento().equals(documento))
+                .count();
+        assertThat(count).isEqualTo(1);
     }
 }

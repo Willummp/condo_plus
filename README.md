@@ -69,6 +69,33 @@ Para evitar falhas em cascata na chamada síncrona do `condominio-service` para 
 
 ---
 
+## ⚡ Arquitetura TP2 — Observabilidade, Mensageria e Reatividade
+
+Na segunda entrega (TP2), a arquitetura foi evoluída para incorporar três pilares essenciais de sistemas distribuídos modernos:
+
+### 1. Observabilidade e Correlação (Correlation ID)
+* **Correlation ID Tracing:** O **API Gateway** intercepta todas as requisições via `CorrelationGatewayFilter` (filtro reativo WebFlux). Se o header `X-Correlation-ID` não existir, ele gera um UUID, injeta-o na requisição enviada ao microsserviço correspondente e também na resposta HTTP final.
+* **Logs Estruturados:** No `condominio-service`, o servlet `CorrelationFilter` captura o Correlation ID da requisição e o registra no **MDC (Mapped Diagnostic Context)** do SLF4J/Logback. O padrão de log do console (`[%X{correlationId}]`) é atualizado para exibir o ID de forma transparente em cada linha de log.
+* **Métricas Customizadas:** Configuração do **Spring Boot Actuator** exposto em `/actuator/prometheus`. Usamos o **Micrometer** para coletar métricas customizadas de negócio (counters):
+  * `condoplus.multas.aplicadas` — Incrementado ao aplicar multas.
+  * `condoplus.comunicados.publicados` — Incrementado ao publicar comunicados.
+  * `condoplus.reservas.confirmadas` — Incrementado ao confirmar reservas de áreas comuns.
+
+### 2. Mensageria Assíncrona com Apache Kafka
+* **Domínio Orientado a Eventos:** O `condominio-service` publica eventos de negócio de forma assíncrona para o broker:
+  * `comunicados.publicados` contendo o payload `ComunicadoPublicadoEvent`.
+  * `multas.aplicadas` contendo o payload `MultaAplicadaEvent`.
+  * `reservas.confirmadas` contendo o payload `ReservaConfirmadaEvent`.
+* **Envelope de Evento (`EventEnvelope`):** Todos os eventos publicados são encapsulados em um envelope padronizado que transporta metadados essenciais: `event_id`, `event_type`, `timestamp`, `correlation_id` (preservando o rastreamento do log), `origin_service` e o `payload` de negócio.
+* **Resiliência e DLQ (Dead Letter Queue):** O tratamento de falhas em consumidores de Kafka é feito via `DeadLetterPublishingRecoverer` (Spring Kafka) configurado no `KafkaConfig`. Mensagens que falham repetidamente após 3 tentativas com 2 segundos de intervalo são enviadas automaticamente para o tópico `.DLT` (ex: `credenciais.criadas.DLT`).
+* **Garantia de Idempotência:** O `CredencialCriadaConsumer` escuta o tópico `credenciais.criadas` e valida se a pessoa física já existe verificando previamente a existência do `documento` (CPF) ou do `credencial_id` no banco de dados, evitando duplicidades em caso de redelivery de mensagens.
+
+### 3. Programação Reativa com WebFlux
+* **WebClient Reativo:** O `IamClient` foi totalmente refatorado para utilizar o `WebClient` reativo do Spring WebFlux em substituição ao `RestClient` síncrono. O método `criarCredencial` retorna um `Mono<CredencialResponse>` manipulado pelo Project Reactor.
+* **Tolerância a Falhas com Reactor:** O uso de `@CircuitBreaker` e `@TimeLimiter` do Resilience4j está integrado de forma nativa ao fluxo reativo do Project Reactor, acionando o método de `fallback` caso a chamada ao IAM exceda o tempo limite de 3 segundos ou o serviço esteja indisponível.
+
+---
+
 ## 🛠️ Como Executar o Projeto
 
 ### Pré-requisitos:
