@@ -9,7 +9,8 @@ import com.condoplus.condominio.convivencia.repository.ReservaRepository;
 import com.condoplus.condominio.exception.AreaComumIndisponivelException;
 import com.condoplus.condominio.exception.AreaComumNaoEncontradaException;
 import com.condoplus.condominio.exception.ConflitoReservaException;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.stereotype.Service;
@@ -34,17 +35,26 @@ import java.util.UUID;
  * <p>Anotações importantes:
  * <ul>
  *   <li>{@code @Service} — Declara esta classe como um componente de serviço gerenciado pelo Spring IoC, habilitando a injeção de dependências.</li>
- *   <li>{@code @RequiredArgsConstructor} — Gera pelo Lombok um construtor com argumentos para todos os campos {@code final}, eliminando a necessidade de Autowired explícito.</li>
  *   <li>{@code @Slf4j} — Injeta automaticamente um Logger SLF4J (Logback) sob o atributo {@code log} para registro de auditoria e depuração local.</li>
  * </ul>
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ReservaService {
 
     private final ReservaRepository reservaRepository;
     private final AreaComumRepository areaComumRepository;
+    private final Counter reservasCounter;
+
+    public ReservaService(ReservaRepository reservaRepository,
+                          AreaComumRepository areaComumRepository,
+                          MeterRegistry meterRegistry) {
+        this.reservaRepository = reservaRepository;
+        this.areaComumRepository = areaComumRepository;
+        this.reservasCounter = Counter.builder("condoplus.reservas.confirmadas")
+                .description("Quantidade total de reservas confirmadas no condominio")
+                .register(meterRegistry);
+    }
 
     /**
      * Realiza o agendamento (reserva) de uma área comum de forma consistente e atômica.
@@ -88,6 +98,7 @@ public class ReservaService {
         r.setStatus(StatusReserva.CONFIRMADA);
 
         Reserva salva = reservaRepository.save(r);
+        this.reservasCounter.increment();
         log.info("Reserva confirmada. id={} area={} data={}", salva.getId(), area.getNome(), salva.getDataReserva());
         return ReservaResponse.fromEntity(salva, area.getNome());
     }

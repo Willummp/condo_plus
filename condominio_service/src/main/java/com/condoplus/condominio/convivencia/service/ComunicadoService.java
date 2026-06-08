@@ -7,7 +7,8 @@ import com.condoplus.condominio.convivencia.dto.NovoComunicadoRequest;
 import com.condoplus.condominio.convivencia.repository.ComunicadoRepository;
 import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import com.condoplus.condominio.exception.PessoaNaoEncontradaException;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.stereotype.Service;
@@ -20,21 +21,24 @@ import java.util.stream.StreamSupport;
 
 /**
  * Serviço responsável pela publicação, remoção e listagem de Comunicados do condomínio.
- * 
- * <p>Anotações da classe:
- * <ul>
- *   <li>{@code @Service} — Declara esta classe como um componente de serviço gerenciado pelo Spring IoC.</li>
- *   <li>{@code @RequiredArgsConstructor} — Gera pelo Lombok o construtor com argumentos para os campos {@code final}.</li>
- *   <li>{@code @Slf4j} — Injeta automaticamente o Logger SLF4J sob o atributo {@code log}.</li>
- * </ul>
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ComunicadoService {
 
     private final ComunicadoRepository comunicadoRepository;
     private final PessoaRepository pessoaRepository;
+    private final Counter comunicadosCounter;
+
+    public ComunicadoService(ComunicadoRepository comunicadoRepository,
+                             PessoaRepository pessoaRepository,
+                             MeterRegistry meterRegistry) {
+        this.comunicadoRepository = comunicadoRepository;
+        this.pessoaRepository = pessoaRepository;
+        this.comunicadosCounter = Counter.builder("condoplus.comunicados.publicados")
+                .description("Quantidade total de comunicados publicados no condominio")
+                .register(meterRegistry);
+    }
 
     /**
      * Publica um comunicado geral ou segmentado (exceto para bloco específico) na base de dados.
@@ -70,6 +74,7 @@ public class ComunicadoService {
         }
 
         Comunicado salvo = comunicadoRepository.save(comunicado);
+        this.comunicadosCounter.increment();
         log.info("Comunicado publicado com sucesso. id={}", salvo.getId());
 
         return ComunicadoResponse.fromEntity(salvo);
@@ -111,6 +116,7 @@ public class ComunicadoService {
         comunicado.setDataPublicacao(LocalDateTime.now());
 
         Comunicado salvo = comunicadoRepository.save(comunicado);
+        this.comunicadosCounter.increment();
         log.info("Comunicado para o bloco {} publicado com sucesso. id={}", bloco, salvo.getId());
 
         return ComunicadoResponse.fromEntity(salvo);

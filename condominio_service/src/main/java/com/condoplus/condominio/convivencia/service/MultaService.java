@@ -9,7 +9,8 @@ import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import com.condoplus.condominio.estrutura.repository.UnidadeRepository;
 import com.condoplus.condominio.exception.PessoaNaoEncontradaException;
 import com.condoplus.condominio.exception.UnidadeNaoEncontradaException;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.stereotype.Service;
@@ -22,22 +23,27 @@ import java.util.stream.StreamSupport;
 
 /**
  * Serviço responsável por gerenciar a aplicação, atualização de status e listagem de Multas do condomínio.
- * 
- * <p>Anotações da classe:
- * <ul>
- *   <li>{@code @Service} — Declara esta classe como um componente de serviço gerenciado pelo Spring IoC.</li>
- *   <li>{@code @RequiredArgsConstructor} — Gera pelo Lombok o construtor com argumentos para os campos {@code final}.</li>
- *   <li>{@code @Slf4j} — Injeta automaticamente o Logger SLF4J sob o atributo {@code log}.</li>
- * </ul>
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class MultaService {
 
     private final MultaRepository multaRepository;
     private final UnidadeRepository unidadeRepository;
     private final PessoaRepository pessoaRepository;
+    private final Counter multasCounter;
+
+    public MultaService(MultaRepository multaRepository,
+                        UnidadeRepository unidadeRepository,
+                        PessoaRepository pessoaRepository,
+                        MeterRegistry meterRegistry) {
+        this.multaRepository = multaRepository;
+        this.unidadeRepository = unidadeRepository;
+        this.pessoaRepository = pessoaRepository;
+        this.multasCounter = Counter.builder("condoplus.multas.aplicadas")
+                .description("Quantidade total de multas aplicadas no condominio")
+                .register(meterRegistry);
+    }
 
     /**
      * Aplica uma nova multa a uma unidade condominial.
@@ -77,6 +83,7 @@ public class MultaService {
         multa.setAplicadaPorId(AggregateReference.to(aplicadorId));
 
         Multa salva = multaRepository.save(multa);
+        this.multasCounter.increment();
         log.info("Multa aplicada com sucesso. id={}", salva.getId());
 
         return MultaResponse.fromEntity(salva);
