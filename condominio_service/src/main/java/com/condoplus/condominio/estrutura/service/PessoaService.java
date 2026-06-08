@@ -69,13 +69,16 @@ public class PessoaService {
                 req.role()
             );
             
-            CredencialResponse credResponse = iamClient.criarCredencial(credRequest).join();
+            CredencialResponse credResponse = iamClient.criarCredencial(credRequest).block();
+            if (credResponse == null) {
+                throw new RuntimeException("Resposta nula recebida do IAM");
+            }
             credencialId = credResponse.id();
             log.info("Credencial criada com sucesso no IAM. credencialId={}", credencialId);
             
         } catch (Exception ex) {
             log.error("Erro ao chamar iam-service: {}", ex.getMessage());
-            throw new RuntimeException("Falha no cadastro: " + ex.getCause().getMessage(), ex);
+            throw new RuntimeException("Falha no cadastro: " + ex.getMessage(), ex);
         }
 
         Pessoa pessoa = Pessoa.criar(

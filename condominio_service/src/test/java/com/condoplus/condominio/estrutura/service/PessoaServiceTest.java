@@ -15,7 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+import reactor.core.publisher.Mono;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -60,7 +60,7 @@ class PessoaServiceTest {
         mockPessoaSalva.setId(UUID.randomUUID());
 
         when(pessoaRepository.existsByDocumento(request.documento())).thenReturn(false);
-        when(iamClient.criarCredencial(any())).thenReturn(CompletableFuture.completedFuture(iamResponse));
+        when(iamClient.criarCredencial(any())).thenReturn(Mono.just(iamResponse));
         when(pessoaRepository.save(any(Pessoa.class))).thenReturn(mockPessoaSalva);
 
         // Act
@@ -116,7 +116,7 @@ class PessoaServiceTest {
         when(pessoaRepository.existsByDocumento(request.documento())).thenReturn(false);
         
         RuntimeException iamException = new RuntimeException("Serviço de Autenticação (IAM) temporariamente indisponível.");
-        when(iamClient.criarCredencial(any())).thenReturn(CompletableFuture.failedFuture(iamException));
+        when(iamClient.criarCredencial(any())).thenReturn(Mono.error(iamException));
 
         // Act & Assert
         RuntimeException thrown = assertThrows(RuntimeException.class, () -> pessoaService.cadastrar(request));
