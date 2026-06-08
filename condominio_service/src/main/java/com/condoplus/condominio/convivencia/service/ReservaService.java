@@ -9,6 +9,9 @@ import com.condoplus.condominio.convivencia.repository.ReservaRepository;
 import com.condoplus.condominio.exception.AreaComumIndisponivelException;
 import com.condoplus.condominio.exception.AreaComumNaoEncontradaException;
 import com.condoplus.condominio.exception.ConflitoReservaException;
+import com.condoplus.condominio.event.ReservaConfirmadaEvent;
+import com.condoplus.condominio.producer.CondominioEventProducer;
+import org.slf4j.MDC;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -44,13 +47,16 @@ public class ReservaService {
 
     private final ReservaRepository reservaRepository;
     private final AreaComumRepository areaComumRepository;
+    private final CondominioEventProducer eventProducer;
     private final Counter reservasCounter;
 
     public ReservaService(ReservaRepository reservaRepository,
                           AreaComumRepository areaComumRepository,
+                          CondominioEventProducer eventProducer,
                           MeterRegistry meterRegistry) {
         this.reservaRepository = reservaRepository;
         this.areaComumRepository = areaComumRepository;
+        this.eventProducer = eventProducer;
         this.reservasCounter = Counter.builder("condoplus.reservas.confirmadas")
                 .description("Quantidade total de reservas confirmadas no condominio")
                 .register(meterRegistry);
@@ -99,6 +105,17 @@ public class ReservaService {
 
         Reserva salva = reservaRepository.save(r);
         this.reservasCounter.increment();
+
+        eventProducer.publicarReserva(new ReservaConfirmadaEvent(
+                salva.getId(),
+                req.areaComumId(),
+                moradorId,
+                req.dataReserva(),
+                req.horaInicio(),
+                req.horaFim(),
+                MDC.get("correlationId")
+        ));
+
         log.info("Reserva confirmada. id={} area={} data={}", salva.getId(), area.getNome(), salva.getDataReserva());
         return ReservaResponse.fromEntity(salva, area.getNome());
     }

@@ -9,6 +9,9 @@ import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import com.condoplus.condominio.estrutura.repository.UnidadeRepository;
 import com.condoplus.condominio.exception.PessoaNaoEncontradaException;
 import com.condoplus.condominio.exception.UnidadeNaoEncontradaException;
+import com.condoplus.condominio.event.MultaAplicadaEvent;
+import com.condoplus.condominio.producer.CondominioEventProducer;
+import org.slf4j.MDC;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -31,15 +34,18 @@ public class MultaService {
     private final MultaRepository multaRepository;
     private final UnidadeRepository unidadeRepository;
     private final PessoaRepository pessoaRepository;
+    private final CondominioEventProducer eventProducer;
     private final Counter multasCounter;
 
     public MultaService(MultaRepository multaRepository,
                         UnidadeRepository unidadeRepository,
                         PessoaRepository pessoaRepository,
+                        CondominioEventProducer eventProducer,
                         MeterRegistry meterRegistry) {
         this.multaRepository = multaRepository;
         this.unidadeRepository = unidadeRepository;
         this.pessoaRepository = pessoaRepository;
+        this.eventProducer = eventProducer;
         this.multasCounter = Counter.builder("condoplus.multas.aplicadas")
                 .description("Quantidade total de multas aplicadas no condominio")
                 .register(meterRegistry);
@@ -84,6 +90,17 @@ public class MultaService {
 
         Multa salva = multaRepository.save(multa);
         this.multasCounter.increment();
+
+        eventProducer.publicarMulta(new MultaAplicadaEvent(
+                salva.getId(),
+                req.unidadeId(),
+                aplicadorId,
+                req.motivo(),
+                req.valor(),
+                salva.getDataAplicacao(),
+                MDC.get("correlationId")
+        ));
+
         log.info("Multa aplicada com sucesso. id={}", salva.getId());
 
         return MultaResponse.fromEntity(salva);

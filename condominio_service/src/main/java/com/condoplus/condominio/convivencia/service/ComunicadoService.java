@@ -5,6 +5,10 @@ import com.condoplus.condominio.convivencia.domain.PublicoAlvo;
 import com.condoplus.condominio.convivencia.dto.ComunicadoResponse;
 import com.condoplus.condominio.convivencia.dto.NovoComunicadoRequest;
 import com.condoplus.condominio.convivencia.repository.ComunicadoRepository;
+import com.condoplus.condominio.event.ComunicadoPublicadoEvent;
+import com.condoplus.condominio.producer.CondominioEventProducer;
+import com.condoplus.condominio.estrutura.repository.PessoaRepository;
+import org.slf4j.MDC;
 import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import com.condoplus.condominio.exception.PessoaNaoEncontradaException;
 import io.micrometer.core.instrument.Counter;
@@ -28,13 +32,16 @@ public class ComunicadoService {
 
     private final ComunicadoRepository comunicadoRepository;
     private final PessoaRepository pessoaRepository;
+    private final CondominioEventProducer eventProducer;
     private final Counter comunicadosCounter;
 
     public ComunicadoService(ComunicadoRepository comunicadoRepository,
                              PessoaRepository pessoaRepository,
+                             CondominioEventProducer eventProducer,
                              MeterRegistry meterRegistry) {
         this.comunicadoRepository = comunicadoRepository;
         this.pessoaRepository = pessoaRepository;
+        this.eventProducer = eventProducer;
         this.comunicadosCounter = Counter.builder("condoplus.comunicados.publicados")
                 .description("Quantidade total de comunicados publicados no condominio")
                 .register(meterRegistry);
@@ -75,6 +82,16 @@ public class ComunicadoService {
 
         Comunicado salvo = comunicadoRepository.save(comunicado);
         this.comunicadosCounter.increment();
+        
+        eventProducer.publicarComunicado(new ComunicadoPublicadoEvent(
+                salvo.getId(),
+                salvo.getTitulo(),
+                autorId,
+                req.visibilidade().name(),
+                salvo.getDataPublicacao(),
+                MDC.get("correlationId")
+        ));
+
         log.info("Comunicado publicado com sucesso. id={}", salvo.getId());
 
         return ComunicadoResponse.fromEntity(salvo);
@@ -117,6 +134,16 @@ public class ComunicadoService {
 
         Comunicado salvo = comunicadoRepository.save(comunicado);
         this.comunicadosCounter.increment();
+
+        eventProducer.publicarComunicado(new ComunicadoPublicadoEvent(
+                salvo.getId(),
+                salvo.getTitulo(),
+                autorId,
+                PublicoAlvo.BLOCO_ESPECIFICO.name(),
+                salvo.getDataPublicacao(),
+                MDC.get("correlationId")
+        ));
+
         log.info("Comunicado para o bloco {} publicado com sucesso. id={}", bloco, salvo.getId());
 
         return ComunicadoResponse.fromEntity(salvo);
