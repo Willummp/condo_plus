@@ -24,11 +24,17 @@ public class CredencialCriadaConsumer {
         }
 
         try {
-            log.info("Recebido evento CredencialCriada no Kafka para o documento: {}", event.documento());
+            log.info("Recebido evento CredencialCriada no Kafka para o documento: {} [tp2]", event.documento());
 
-            // Garantir idempotência: verificar se pessoa já existe
+            // Garantir idempotência: verificar se pessoa já existe por documento
             if (pessoaRepository.existsByDocumento(event.documento())) {
-                log.warn("Mensagem duplicada ou pessoa já existente com o documento {}. Ignorando processamento.", event.documento());
+                log.warn("Mensagem duplicada ou pessoa já existente com o documento {} [tp2]. Ignorando processamento.", event.documento());
+                return;
+            }
+
+            // Garantir idempotência: verificar se pessoa já existe por credencialId
+            if (event.credencialId() != null && pessoaRepository.existsByCredencialId(event.credencialId())) {
+                log.warn("Mensagem duplicada ou pessoa já existente com a credencialId {} [tp2]. Ignorando processamento.", event.credencialId());
                 return;
             }
 
@@ -41,7 +47,7 @@ public class CredencialCriadaConsumer {
             );
 
             pessoaRepository.save(novaPessoa);
-            log.info("Pessoa criada assincronamente a partir de evento do IAM. id={}", novaPessoa.getId());
+            log.info("Pessoa criada assincronamente a partir de evento do IAM [tp2]. id={}", novaPessoa.getId());
         } finally {
             MDC.clear();
         }
