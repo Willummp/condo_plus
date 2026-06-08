@@ -1,70 +1,70 @@
-# 📚 Documentação de Estudos — TP2 (Eventos, Observabilidade e Reatividade)
+# 📚 Documentação de Estudos Profunda — TP2 (Eventos, Observabilidade e Reatividade)
 
-Este documento descreve os conceitos teóricos e práticos abordados no **Trabalho Prático 2 (TP2)** para evolução do ecossistema do **Condo+**, com referências claras de onde encontrar cada implementação no código.
+Este guia foi desenhado para consolidar a teoria profunda e a prática das modernizações exigidas no TP2 do Condo+. Entenda o "Por que" e o "O que", antes de ver o "Onde".
 
 ---
 
-## 1. Observabilidade e Rastreamento Distribuído (Correlation ID)
+## 1. Observabilidade: Correlation ID e Actuator
 
-Para evitar que um erro numa rede de microsserviços fique impossível de rastrear, usamos um identificador unificado.
+### O que é Observabilidade?
+Imagine um erro estourando no painel do administrador. Como descobrir a origem se a requisição passou pelo Gateway, pelo IAM, chamou o Kafka, e foi parar no Serviço de Condomínios? **Observabilidade** é tornar os "órgãos internos" do sistema visíveis.
 
-### A. Correlação (Correlation ID) com MDC
-* O API Gateway gera o ID se não existir e propaga no header `X-Correlation-ID`.
-* O `condominio-service` captura o header e anexa à thread usando o **MDC (Mapped Diagnostic Context)** do Logback, o que faz todas as linhas de log geradas pela thread imprimirem o ID.
+### O que é Correlation ID (ID de Correlação) e MDC?
+Quando a requisição do usuário entra no Gateway, o sistema cria uma etiqueta única (ex: `123-abc`). Essa etiqueta é o **Correlation ID**. Ela viaja pelos "Cabeçalhos" HTTP por todos os microsserviços. 
+- **O problema do Log:** Se você apenas receber a etiqueta, você teria que digitar `logger.info("Etiqueta: " + id + " processando")` em todas as milhares de linhas do projeto. Isso é insano.
+- **A Solução (MDC):** O **Mapped Diagnostic Context (MDC)** é um recurso da biblioteca de Logs (Logback). Assim que a requisição chega no Microsserviço, um Filtro pega a Etiqueta e "grampeia" ela na *Thread* atual do Java (`MDC.put()`). A partir daquele milissegundo, absolutamente qualquer `log.info()` disparado no sistema irá magicamente imprimir a Etiqueta automaticamente. Quando a requisição morre, o MDC joga a etiqueta fora.
 
-📍 **Onde encontrar no código:**
-- **Gateway:** [CorrelationGatewayFilter.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/infra/api-gateway/src/main/java/com/condoplus/gateway/filter/CorrelationGatewayFilter.java) (Interceptação e injeção do header).
-- **Serviço:** [CorrelationFilter.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/config/CorrelationFilter.java) (Leitura do header e registro no `MDC.put()`).
-
-### B. Métricas com Actuator e Micrometer
-* Uso do **Spring Boot Actuator** e exportação via `/actuator/prometheus`.
-* Métricas customizadas de negócio (ex: número de reservas e multas).
+### O que é Spring Boot Actuator e Micrometer?
+- **Actuator:** É uma ferramenta do Spring que injeta endpoints prontos no seu projeto (como `/actuator/health` ou `/actuator/metrics`). Ele serve como o painel do carro do seu app, exibindo se está ligado, memória RAM usada, e etc.
+- **Micrometer:** Assim como o `SLF4J` é a interface padrão para escrever textos (Logs), o Micrometer é a interface padrão para escrever **Métricas** numéricas (ex: "Contador de Multas Aplicadas"). O Micrometer coleta esses números e formata perfeitamente para sistemas de monitoramento modernos, como o **Prometheus**.
 
 📍 **Onde encontrar no código:**
-- **Contadores (Counters):** Em [ComunicadoService.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/convivencia/service/ComunicadoService.java), veja `Counter.builder("condoplus.comunicados.publicados").register(meterRegistry)` e a chamada `comunicadosCounter.increment()`. O mesmo ocorre em [MultaService.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/convivencia/service/MultaService.java).
+- **MDC:** Em [CorrelationFilter.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/config/CorrelationFilter.java)
+- **Métricas:** Em [ComunicadoService.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/convivencia/service/ComunicadoService.java) (veja `Counter.builder(...)`)
 
 ---
 
 ## 2. Comunicação Assíncrona com Apache Kafka
 
-Evita acoplamento temporal e falhas de comunicação bloqueantes entre os microsserviços.
+### Por que trocar o REST síncrono pelo Kafka assíncrono?
+Se o Serviço de Moradores (REST) precisar avisar o Serviço Financeiro que um morador novo entrou, ele manda um HTTP POST. Se o Financeiro estiver travado, o Serviço de Moradores trava esperando.
+**Com o Kafka (Broker de Mensagens):** O Serviço de Moradores simplesmente grita num megafone: *"UM MORADOR ENTROU!"* (Ele **Produziu** um Evento de Domínio). Ele não liga para quem está ouvindo e continua seu trabalho. O Serviço Financeiro, quando estiver livre, escuta a mensagem (Ele **Consome**) e faz o que precisa. O sistema nunca trava por causa do vizinho.
 
-### A. Domínio Orientado a Eventos (Domain Events) e Produtores
-* Eventos de domínio são fatos que ocorreram no passado do sistema (ex: *ReservaConfirmada*, *MultaAplicada*). 
-* Um `Producer` (Produtor) é acionado pelos serviços principais assim que uma entidade é gravada no banco.
+### Produtor, Consumidor e Idempotência
+- **Produtor:** Quem envia a mensagem para o tópico do Kafka.
+- **Consumidor:** Quem fica de olho no tópico para baixar e processar mensagens novas.
+- **A Idempotência:** A regra de ouro de sistemas distribuídos é: "A rede sempre falha". Às vezes o consumidor processa a mensagem, mas a rede cai antes dele avisar o Kafka. O Kafka manda a mensagem de novo. O seu Consumidor deve ser **Idempotente**: ele deve verificar se o "CPF já existe" antes de salvar. Fazer a mesma ação 1 ou 1000 vezes tem que resultar no mesmo estado final (sem gerar 1000 moradores duplicados).
 
-📍 **Onde encontrar no código:**
-- **Classes de Eventos (Records):** Pasta [event/](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/event), como [ReservaConfirmadaEvent.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/event/ReservaConfirmadaEvent.java).
-- **Produtor Kafka:** [CondominioEventProducer.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/producer/CondominioEventProducer.java) (onde invocamos `kafkaTemplate.send()`).
-
-### B. Consumidor e Idempotência
-* O Consumidor reage de forma passiva a mensagens (ex: *CredencialCriadaEvent* vinda do IAM).
-* **Idempotência:** Ele checa se o documento CPF da credencial já foi cadastrado antes de salvar a pessoa de novo, evitando que um erro de rede duplique registros.
-
-📍 **Onde encontrar no código:**
-- **Consumidor:** Em [CredencialCriadaConsumer.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/consumer/CredencialCriadaConsumer.java) (veja o `@KafkaListener` e o `if (pessoaRepository.existsByDocumento(event.documento()))`).
-
-### C. Resiliência no Kafka: DLQ (Dead Letter Queue)
-* Se a mensagem causar uma exceção ao ser consumida, ela é retentada e depois jogada para um tópico DLT (Dead Letter Topic) para análise humana, impedindo o travamento da fila.
+### A Fila Morta (DLT - Dead Letter Topic)
+Se a mensagem recebida for um JSON corrompido, seu código dará Erro. O Kafka, teimoso, manda de novo. Seu código dá Erro. O servidor entra num laço infinito processando um veneno.
+**A Solução (DLT):** Configuramos o Spring para tentar apenas 3 vezes. Se falhar na 3ª, o Spring remove a mensagem da fila principal e joga numa "Fila Morta". O sistema continua processando o resto livremente, e o administrador olha a fila morta depois.
 
 📍 **Onde encontrar no código:**
-- **Configuração da DLT:** Em [KafkaConfig.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/config/KafkaConfig.java) (utilizando o `DeadLetterPublishingRecoverer` com um BackOff de 3 tentativas).
+- **Produtor:** [CondominioEventProducer.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/producer/CondominioEventProducer.java)
+- **Consumidor (Idempotente):** [CredencialCriadaConsumer.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/consumer/CredencialCriadaConsumer.java)
+- **DLT:** Em [KafkaConfig.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/config/KafkaConfig.java)
 
 ---
 
-## 3. Programação Reativa com WebFlux e WebClient
+## 3. Programação Reativa: WebClient vs RestTemplate
 
-Troca do `RestClient` síncrono pelo paradigma reativo, que não bloqueia threads em chamadas I/O (Input/Output).
+### O problema do paradigma Síncrono (Thread-per-request)
+O modelo tradicional do Java aloca uma "Thread" (operário de CPU) inteira para uma requisição de usuário. Se você faz uma chamada HTTP para outro sistema que demora 3 segundos, o seu operário (Thread) fica 3 segundos cruzando os braços, parado, dormindo. Se chegarem 10.000 requisições lentas, suas 10.000 threads travam. O servidor infarta por falta de Threads livres, mesmo a CPU estando a 10%.
+
+### A solução Reativa (Project Reactor)
+Com a **Programação Reativa**, a Thread envia a requisição HTTP e diz: *"Me avise quando a resposta chegar"*, e vai imediatamente atender outro usuário (Event Loop não-bloqueante). Uma única Thread atende milhares de clientes.
+- **WebClient:** É o cliente HTTP reativo do Spring WebFlux (substituto do velho `RestTemplate`).
+- **Mono:** No reativo, você não retorna o objeto final (ex: `String`). Você retorna uma promessa de que aquilo vai existir no futuro (o `Mono<String>` - "Um elemento no futuro" ou `Flux<String>` - "Vários elementos no futuro").
 
 📍 **Onde encontrar no código:**
-- **Cliente HTTP Reativo:** Em [IamClient.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/estrutura/client/IamClient.java), veja o uso da biblioteca `org.springframework.web.reactive.function.client.WebClient` do Spring WebFlux e o retorno empacotado no objeto reativo `Mono<CredencialResponse>`.
-- **Inscrição Síncrona Segura:** Em [PessoaService.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/estrutura/service/PessoaService.java), veja o `.block()` sendo usado para compatibilizar o fluxo reativo com o atual processo síncrono da transação JDBC.
+- **Cliente Reativo:** Em [IamClient.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/main/java/com/condoplus/condominio/estrutura/client/IamClient.java) (Veja o tipo de retorno `Mono` e a declaração de `webClient`).
 
 ---
 
-## 4. Testes do Kafka com Testcontainers
+## 4. Testcontainers no Kafka
 
-Semelhante ao que foi feito com PostgreSQL, subir um container real do Kafka para testar a mensageria de forma isolada durante as pipelines de Integração.
+Semelhante ao TP1, onde subimos um banco PostgreSQL real durante os testes automatizados, fazemos a exata mesma coisa com o **Apache Kafka**.
+Ao invocar o comando `@Testcontainers` no JUnit, o Docker levanta um contêiner real (`confluentinc/cp-kafka`), o Spring conecta as configurações locais nele, testa as rotinas de publicação do Produtor, e logo após, derruba a infraestrutura limpamente. Garantia total contra falsos-positivos.
 
 📍 **Onde encontrar no código:**
-- **Teste de Integração:** Em [CondominioKafkaIT.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/test/java/com/condoplus/condominio/integration/CondominioKafkaIT.java), declarando a inicialização do `@Container static KafkaContainer kafka`.
+- **Teste de Integração:** Em [CondominioKafkaIT.java](file:///c:/Users/lucferreir/OneDrive - Globo Comunicação e Participações sa/Documentos/Dev/condo_plus/condominio_service/src/test/java/com/condoplus/condominio/integration/CondominioKafkaIT.java) (`@Container static KafkaContainer`).
