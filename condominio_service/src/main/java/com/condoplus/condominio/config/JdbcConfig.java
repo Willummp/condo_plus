@@ -17,20 +17,6 @@ import java.util.UUID;
 /**
  * Configuração do Spring Data JDBC.
  *
- * <p>Problema: Spring Data JDBC não tem @GeneratedValue como JPA.
- * Solução: BeforeConvertCallback roda ANTES de converter o aggregate em SQL,
- * gerando o UUID em Java.
- *
- * <p>Por que gerar o UUID em Java e não no banco (gen_random_uuid())?
- * Se o banco gerasse o UUID, o objeto Java ficaria sem ID após o save().
- * O Spring precisaria de configuração extra para recuperar o valor gerado.
- * Gerar em Java é mais simples e o Spring detecta INSERT vs UPDATE
- * pelo campo @Version (null = novo aggregate = INSERT).
- *
- * <p>Por que um callback por aggregate?
- * O BeforeConvertCallback é tipado — precisamos de um por tipo de aggregate root.
- * No callback de Unidade, geramos também os IDs das Vinculacoes internas,
- * pois elas não têm callback próprio (pertencem ao aggregate).
  */
 @Configuration
 public class JdbcConfig {
