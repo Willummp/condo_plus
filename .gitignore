@@ -41,3 +41,7 @@ docker-compose.override.yml
 # ─── Documentação local (PDFs, DOCX) ─────────────────────────
 # Mantida local — não sobe pro repositório remoto
 condominio_service/docs/
+docs/
+
+# ─── Arquivo de testes HTTP ──────────────────────────────────
+requests.http
