@@ -57,4 +57,14 @@ public interface UnidadeRepository extends CrudRepository<Unidade, UUID> {
      */
     @Query("SELECT * FROM condominio.unidade ORDER BY bloco NULLS FIRST, numero")
     List<Unidade> findAllOrdered();
+
+    /**
+     * Busca a unidade habitacional associada a uma vinculação específica através de SQL puro.
+     * Resolve o gargalo de N+1 ou Memory Scan ao encerrar uma vinculação.
+     * 
+     * @param vinculacaoId ID da vinculação alvo.
+     * @return A unidade associada, se existir.
+     */
+    @Query("SELECT u.* FROM condominio.unidade u JOIN condominio.vinculacao v ON v.unidade_id = u.id WHERE v.id = :vinculacaoId")
+    Optional<Unidade> findByVinculacaoId(UUID vinculacaoId);
 }
