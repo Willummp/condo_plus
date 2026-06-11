@@ -1,0 +1,29 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: auditoria-service
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/condoplus_auditoria}
+      auto-index-creation: true
+
+# Eureka desabilitado por enquanto - habilita quando o servidor Eureka estiver de pe
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    root: INFO
+    com.condoplus.auditoria: DEBUG
+    org.springframework.data.mongodb.core: DEBUG
