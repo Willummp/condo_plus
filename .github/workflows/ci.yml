@@ -1,4 +1,4 @@
-name: Condo+ CI — TP1
+name: Condo+ CI
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build & Test (condominio-service)
+    name: Build & Test (Monorepo)
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +25,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Build & Run Test Suite (condominio-service)
+      - name: Build & Run Test Suite (Monorepo)
         run: |
           mvn clean test
 
