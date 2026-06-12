@@ -1,0 +1,31 @@
+name: Condo+ CI — Condominio Service
+
+on:
+  push:
+    paths:
+      - 'condominio_service/**'
+      - 'pom.xml'
+      - '.github/workflows/condominio-service.yml'
+  pull_request:
+    paths:
+      - 'condominio_service/**'
+      - 'pom.xml'
+      - '.github/workflows/condominio-service.yml'
+
+jobs:
+  test:
+    name: Test Condominio Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run Tests (condominio_service)
+        run: mvn test -pl condominio_service
