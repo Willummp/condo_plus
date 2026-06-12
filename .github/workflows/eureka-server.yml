@@ -1,0 +1,31 @@
+name: Condo+ CI — Eureka Server
+
+on:
+  push:
+    paths:
+      - 'infra/eureka-server/**'
+      - 'pom.xml'
+      - '.github/workflows/eureka-server.yml'
+  pull_request:
+    paths:
+      - 'infra/eureka-server/**'
+      - 'pom.xml'
+      - '.github/workflows/eureka-server.yml'
+
+jobs:
+  test:
+    name: Test Eureka Server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run Tests (eureka-server)
+        run: mvn test -pl infra/eureka-server
