@@ -9,7 +9,6 @@ import com.condoplus.condominio.event.ComunicadoPublicadoEvent;
 import com.condoplus.condominio.producer.CondominioEventProducer;
 import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import org.slf4j.MDC;
-import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import com.condoplus.condominio.exception.PessoaNaoEncontradaException;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
