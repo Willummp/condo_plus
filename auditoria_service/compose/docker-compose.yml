@@ -1,0 +1,23 @@
+# docker-compose do auditoria-service.
+# Sobe MongoDB local com persistencia em volume nomeado.
+# Imagem fixa em 7.0 (LTS) para reprodutibilidade entre integrantes.
+
+name: auditoria-service
+
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: auditoria-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - auditoria_mongo_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  auditoria_mongo_data:
