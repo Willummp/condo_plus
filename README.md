@@ -1,15 +1,10 @@
 # 🏢 Condo+ — Sistema de Gestão de Condomínios Residenciais
 
-## 👥 Integrantes e Organização da Equipe
-* **Turma:** Terça e Quinta
-* **Tipo de Entrega:** Grupo (5 integrantes)
-* **Organizador da Entrega:** Lucas Ferreira
-
 ### Divisão de Responsabilidades por Microsserviço:
 | Aluno | Microsserviço sob Responsabilidade | Papel / Responsabilidade Adicional |
 |---|---|---|
 | **Lucas Ferreira** | `condominio-service` | Desenvolvimento do Core de Estrutura, Convivência e Testes de Integração |
-| **Integrante 2** | `iam-service` | Gerenciamento de Credenciais de Acesso e Autenticação (Spring Security) |
+| **Fernando Telheiros** | `iam-service` | Gerenciamento de Credenciais de Acesso e Autenticação (Spring Security) |
 | **Integrante 3** | `portaria-service` | Controle de Acesso Físico, Visitantes e Recepção de Encomendas |
 | **Integrante 4** | `notificacao-service` | Envio de Alertas e Notificações (E-mail, SMS, Push) |
 | **Integrante 5** | `auditoria-service` | Histórico e Auditoria de Operações Críticas do Condomínio |
@@ -29,7 +24,7 @@ O **Condo+** é um sistema distribuído para modernizar e simplificar a gestão 
 A arquitetura do Condo+ é construída sobre microsserviços desacoplados e resilientes:
 
 ```
-                      [ Cliente (App/Web) ]
+                          [ Cliente ]
                                │
                                ▼ (Porta 8080)
                        [ API Gateway ] ◄──── Confirma Rotas
@@ -41,7 +36,7 @@ A arquitetura do Condo+ é construída sobre microsserviços desacoplados e resi
        │               │               │               │
        ▼               ▼               ▼               ▼
   PostgreSQL      PostgreSQL      PostgreSQL      PostgreSQL
- (Schema condo)  (Schema iam)    (Schema port)   (Schema notif)
+ (Schema condo)  (Schema xxx)    (Schema xxx)   (Schema xxx)
 ```
 
 ### 📡 Discovery Server (Eureka Server)

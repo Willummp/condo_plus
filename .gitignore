@@ -34,6 +34,7 @@ logs/
 *.tmp
 *.swp
 
+
 # ─── Docker ──────────────────────────────────────────────────
 # (docker-compose.override.yml pode conter segredos locais)
 docker-compose.override.yml
