@@ -4,6 +4,7 @@ import com.condoplus.portaria_service.model.enums.TipoMovimento;
 import com.condoplus.portaria_service.model.enums.TipoPessoaAcesso;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -15,36 +16,64 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class RegistroAcesso {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_pessoa", nullable = false, length = 20)
+    @Column(name = "tipo_pessoa", nullable = false)
     private TipoPessoaAcesso tipoPessoa;
-    /**
-     * ID da pessoa que entrou/saiu. Para MORADOR/FUNCIONARIO/PRESTADOR,
-     * aponta para Pessoa do condominio. Para VISITANTE, aponta para
-     * Visitante deste serviço.
-     */
-    @Column(name = "pessoa_id", nullable = false)
+
+    @Column(name = "pessoa_id")
     private UUID pessoaId;
+
+    @Column(name = "visitante_id")
+    private UUID visitanteId;
+
     @Column(name = "unidade_id")
-    private UUID unidadeId; // pode ser null para FUNCIONARIO sem vínculo
+    private UUID unidadeId;
+
     @Column(name = "veiculo_placa", length = 10)
     private String veiculoPlaca;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_movimento", nullable = false, length = 10)
+    @Column(name = "tipo_movimento", nullable = false)
     private TipoMovimento tipoMovimento;
+
     @Column(name = "timestamp_acesso", nullable = false)
     private LocalDateTime timestampAcesso;
+
     @Column(name = "porteiro_id", nullable = false)
-    private UUID porteiroId; // Pessoa do condominio-service
+    private UUID porteiroId;
+
     @Column(length = 500)
     private String observacoes;
+
     @PrePersist
     void onCreate() {
         if (timestampAcesso == null) {
             timestampAcesso = LocalDateTime.now();
+        }
+        validar();
+    }
+
+    public void validar() {
+        if (tipoPessoa == null)
+            throw new IllegalArgumentException("Tipo de pessoa obrigatório");
+
+        if (tipoMovimento == null)
+            throw new IllegalArgumentException("Tipo de movimento obrigatório");
+
+        if (porteiroId == null)
+            throw new IllegalArgumentException("Porteiro obrigatório");
+
+        if (tipoPessoa == TipoPessoaAcesso.VISITANTE) {
+            if (visitanteId == null || pessoaId != null)
+                throw new IllegalArgumentException("Visitante deve ter visitanteId apenas");
+        } else {
+            if (pessoaId == null || visitanteId != null)
+                throw new IllegalArgumentException("Pessoa deve ter pessoaId apenas");
         }
     }
 }
