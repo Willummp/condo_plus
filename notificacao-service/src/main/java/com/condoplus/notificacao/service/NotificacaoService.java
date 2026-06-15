@@ -20,8 +20,7 @@ public class NotificacaoService {
     private final NotificacaoRepository notificacaoRepository;
 
     public Mono<Notificacao> solicitarNotificacao(NotificacaoRequest request) {
-        log.info("Recebendo solicitacao de notificacao REST para pessoaId={}", request.pessoaId());
-
+        log.info("Recebendo solicitacao REST para pessoaId={}", request.pessoaId());
         Notificacao nova = new Notificacao();
         nova.setDestinatarioPessoaId(request.pessoaId());
         nova.setEventoOrigemId(request.eventoOrigemId());
@@ -32,12 +31,21 @@ public class NotificacaoService {
         nova.setStatus(StatusNotificacao.PENDENTE);
         nova.setTentativas(0);
         nova.setCriadaEm(LocalDateTime.now());
-
         return notificacaoRepository.save(nova);
     }
 
-    public Flux<Notificacao> buscarPorPessoa(UUID pessoaId) {
-        log.debug("Buscando historico de notificacoes para pessoaId={}", pessoaId);
+    public Flux<Notificacao> listarPorDestinatario(UUID pessoaId) {
+        log.debug("Buscando historico para o usuario={}", pessoaId);
         return notificacaoRepository.findByDestinatarioPessoaIdOrderByCriadaEmDesc(pessoaId);
+    }
+
+    public Mono<Notificacao> retentar(UUID id) {
+        log.info("Solicitando retentativa manual para a notificacao id={}", id);
+        return notificacaoRepository.findById(id)
+                .flatMap(notif -> {
+                    notif.setStatus(StatusNotificacao.PENDENTE);
+                    notif.setTentativas(notif.getTentativas() + 1);
+                    return notificacaoRepository.save(notif);
+                });
     }
 }

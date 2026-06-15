@@ -3,6 +3,7 @@ package com.condoplus.notificacao.service;
 import com.condoplus.notificacao.domain.PreferenciaNotificacao;
 import com.condoplus.notificacao.dto.AtualizarPreferenciaRequest;
 import com.condoplus.notificacao.repository.PreferenciaRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -10,17 +11,14 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class PreferenciaService {
 
     private final PreferenciaRepository preferenciaRepository;
 
-    public PreferenciaService(PreferenciaRepository preferenciaRepository) {
-        this.preferenciaRepository = preferenciaRepository;
-    }
-
-    public Mono<PreferenciaNotificacao> salvarPreferencia(AtualizarPreferenciaRequest request) {
+    public Mono<PreferenciaNotificacao> atualizar(UUID pessoaId, AtualizarPreferenciaRequest request) {
         return preferenciaRepository.findByPessoaIdAndTipoEventoAndCanal(
-                        request.pessoaId(), request.tipoEvento(), request.canal()
+                        pessoaId, request.tipoEvento(), request.canal()
                 )
                 .flatMap(prefExistente -> {
                     prefExistente.setAtiva(request.ativa());
@@ -29,7 +27,7 @@ public class PreferenciaService {
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                     PreferenciaNotificacao novaPref = new PreferenciaNotificacao();
-                    novaPref.setPessoaId(request.pessoaId());
+                    novaPref.setPessoaId(pessoaId);
                     novaPref.setTipoEvento(request.tipoEvento());
                     novaPref.setCanal(request.canal());
                     novaPref.setAtiva(request.ativa());
