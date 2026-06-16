@@ -104,6 +104,17 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Apache Kafka via Spring (TP2): consumir eventos de dominio dos demais servicos -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
