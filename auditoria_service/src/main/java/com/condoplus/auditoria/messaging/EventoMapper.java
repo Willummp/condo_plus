@@ -44,7 +44,7 @@ public class EventoMapper {
             case "ComunicadoPublicado" -> TipoEvento.COMUNICADO_PUBLICADO;
             case "ReservaConfirmada" -> TipoEvento.RESERVA_CONFIRMADA;
             case "CredencialCriada" -> TipoEvento.CREDENCIAL_CRIADA;
-            // outros tipos serao adicionados conforme os servicos publicarem
+            case "LoginFalhado" -> TipoEvento.LOGIN_FALHADO;   // <-- adicionar esta linha
             default -> TipoEvento.OUTRO;
         };
     }

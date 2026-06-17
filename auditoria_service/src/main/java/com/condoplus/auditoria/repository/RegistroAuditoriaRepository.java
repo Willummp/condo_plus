@@ -57,4 +57,12 @@ public interface RegistroAuditoriaRepository
      * Listagem geral paginada, mais recentes primeiro.
      */
     Page<RegistroAuditoria> findAllByOrderByTimestampDesc(Pageable pageable);
+
+    /**
+     * Conta eventos de um tipo, de uma entidade, a partir de um instante.
+     * E a query da JANELA DESLIZANTE: passamos inicio = (timestamp do evento - 60s)
+     * e contamos quantos ocorreram nesse intervalo. Usa o indice composto do C4.
+     */
+    long countByTipoEventoAndEntidadeAfetada_IdAndTimestampGreaterThanEqual(
+            TipoEvento tipoEvento, String entidadeId, java.time.Instant inicio);
 }
