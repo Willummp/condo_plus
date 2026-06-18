@@ -21,7 +21,7 @@ import java.util.Map;
  *
  * Representa UM evento auditavel ocorrido em qualquer servico do Condo+.
  *
- * Justificativa do MongoDB (defesa oral do RNF-04):
+ * Justificativa da escolha do MongoDB:
  * 1. Payload heterogeneo: cada tipo de evento tem campos diferentes.
  *    MULTA_APLICADA tem valor/motivo; ENCOMENDA_RECEBIDA tem unidade/tipo;
  *    LOGIN_FALHADO tem ip/userAgent. Mapeamento documental absorve isso
@@ -37,8 +37,7 @@ import java.util.Map;
  *    expireAfterSeconds — sem job/cron externo. Em PostgreSQL exigiria
  *    pg_partman + particionamento + job de drop, muito mais complexo.
  *
- * Atende: RF-AUD-01 (registro de eventos), RNF-04 (banco nao-relacional
- * justificado), RNF-09 (rastreabilidade via correlationId).
+ * Cobre o registro de eventos, a persistencia nao-relacional e a rastreabilidade via correlationId.
  */
 @Document(collection = "registros_auditoria")
 @CompoundIndexes({
@@ -68,7 +67,7 @@ public class RegistroAuditoria {
      *
      * @Indexed(unique = true) e o mecanismo de IDEMPOTENCIA do servico.
      * Se Kafka redelivera no TP2 (at-least-once delivery), o segundo save
-     * lanca DuplicateKeyException — capturamos e tratamos como sucesso
+     * lanca DuplicateKeyException — capturando e tratando como sucesso
      * silencioso. Sem isso, redelivery duplica registros e polui o banco.
      */
     @Indexed(unique = true)
@@ -78,7 +77,7 @@ public class RegistroAuditoria {
     /**
      * Identificador de correlacao distribuida.
      * Propagado pelo Gateway via header X-Correlation-Id em todas as chamadas.
-     * Permite rastrear uma operacao que atravessa multiplos servicos (RNF-09).
+     * Permite rastrear uma operacao que atravessa multiplos servicos.
      */
     @Indexed
     @Field("correlationId")

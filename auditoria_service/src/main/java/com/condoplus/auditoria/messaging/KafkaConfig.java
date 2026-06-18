@@ -23,15 +23,16 @@ import java.util.Map;
  *
  * Dois pontos centrais:
  *
- * 1) DESSERIALIZACAO (Opcao B): o produtor (condominio-service) grava o tipo
+ * 1) DESSERIALIZACAO: o produtor (condominio-service) grava o tipo
  *    da classe dele no header da mensagem. Se deixassemos o default, o
  *    JsonDeserializer tentaria instanciar com.condoplus.condominio.event.
  *    EventEnvelope — classe que NAO existe aqui. Por isso configuramos o
  *    deserializer para IGNORAR o header de tipo (setUseTypeHeaders=false) e
- *    desserializar sempre para o NOSSO EventEnvelope. Isso concretiza o
- *    desacoplamento: lemos o evento no nosso formato, sem depender do deles.
+ *    desserializar sempre para o EventEnvelope local.
+ *    Isso concretiza o desacoplamento: o evento e lido no formato proprio do auditoria,
+ *    sem depender da classe do produtor.
  *
- * 2) RESILIENCIA (padrao do grupo): ErrorHandlingDeserializer envolve o
+ * 2)  RESILIENCIA: ErrorHandlingDeserializer envolve o
  *    JsonDeserializer (mensagem malformada nao derruba o consumer) e o
  *    DefaultErrorHandler reenvia para um Dead Letter Topic (<topico>.DLT)
  *    apos 3 tentativas com intervalo de 2s.
@@ -41,16 +42,16 @@ import java.util.Map;
 public class KafkaConfig {
 
     /**
-     * ConsumerFactory que desserializa o value para o nosso EventEnvelope,
+     * ConsumerFactory que desserializa o value para o EventEnvelope local,
      * ignorando o type header do produtor.
      */
     @Bean
     public ConsumerFactory<String, EventEnvelope> consumerFactory(KafkaProperties props) {
         Map<String, Object> config = props.buildConsumerProperties(null);
 
-        // Desserializador do nosso EventEnvelope, ignorando o header de tipo do produtor.
+        // Desserializador do EventEnvelope, ignorando o header de tipo do produtor.
         JsonDeserializer<EventEnvelope> jsonDeserializer = new JsonDeserializer<>(EventEnvelope.class);
-        jsonDeserializer.setUseTypeHeaders(false); // <-- chave da Opcao B
+        jsonDeserializer.setUseTypeHeaders(false); // <-- chave
         jsonDeserializer.addTrustedPackages("*");
 
         // Envolve o JsonDeserializer com tratamento de erro (poison message -> DLT).

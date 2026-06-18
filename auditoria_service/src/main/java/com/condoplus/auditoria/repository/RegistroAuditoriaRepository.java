@@ -15,7 +15,7 @@ import java.util.Optional;
  * Repository do documento RegistroAuditoria.
  *
  * Estende MongoRepository, que ja entrega save, findById, findAll,
- * deleteById, count, etc. de graca. Nao escrevemos implementacao:
+ * deleteById, count, etc. de graca. Nao se escreve implementacao:
  * o Spring Data gera o codigo em runtime lendo o NOME de cada metodo
  * (derived queries).
  *

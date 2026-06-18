@@ -21,8 +21,8 @@ import java.util.Set;
  *
  * Unica regra que CRUZA dois tipos de evento: dispara num LOGIN_REALIZADO mas
  * inspeciona os LOGIN_FALHADO anteriores da mesma credencial. E a unica que
- * compara IPs — como o IP esta no payload (nao indexado), buscamos a lista de
- * falhas (filtrada por campos indexados) e comparamos os IPs em memoria.
+ * compara IPs — como o IP esta no payload (nao indexado), buscando a lista de
+ * falhas (filtrada por campos indexados) e comparando os IPs em memoria.
  *
  * Janela de 5 minutos relativa ao timestamp do sucesso.
  */

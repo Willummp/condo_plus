@@ -14,7 +14,7 @@ package com.condoplus.auditoria.domain;
  *   ou seja, no banco nao perdemos legibilidade, mas no codigo ganhamos
  *   o controle do compilador.
  *
- * Atende: RF-AUD-01 (categorizacao dos eventos auditaveis).
+ * categorizacao dos eventos auditaveis.
  */
 public enum TipoEvento {
 
