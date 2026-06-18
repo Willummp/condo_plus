@@ -1,100 +1,78 @@
--- 🔹 Criar schema
+-- ═══════════════════════════════════════════════════════════
+-- V1 — Schema inicial do portaria-service
+-- Decisões:
+--   • VARCHAR para enums → compatível com @Enumerated(EnumType.STRING) do JPA
+--     (tipos ENUM nativos do PostgreSQL exigem cast e complicam migrações)
+--   • pessoa_id único em registro_acesso → visitante_id removido conforme
+--     decisão de modelagem (visitante.id é usado como pessoa_id quando tipo=VISITANTE)
+--   • schema 'portaria' isolado dos outros serviços
+-- ═══════════════════════════════════════════════════════════
+
 CREATE SCHEMA IF NOT EXISTS portaria;
 
-CREATE TYPE portaria.tipo_visitante AS ENUM ('SOCIAL', 'PRESTADOR');
-CREATE TYPE portaria.status_visitante AS ENUM ('AUTORIZADO', 'ENCERRADO', 'BLOQUEADO');
+SET search_path TO portaria;
 
-CREATE TYPE portaria.tipo_pessoa_acesso AS ENUM ('MORADOR', 'VISITANTE', 'FUNCIONARIO', 'PRESTADOR');
-CREATE TYPE portaria.tipo_movimento AS ENUM ('ENTRADA', 'SAIDA');
+-- ───────────────────────────────────────────────────────────
+-- VISITANTE
+-- ───────────────────────────────────────────────────────────
+CREATE TABLE visitante (
+                           id                         UUID         PRIMARY KEY,
+                           nome                       VARCHAR(200) NOT NULL,
+                           documento                  VARCHAR(20),
+                           telefone                   VARCHAR(20),
+                           tipo                       VARCHAR(20)  NOT NULL,
+                           autorizado_por_pessoa_id   UUID         NOT NULL,
+                           autorizado_para_unidade_id UUID         NOT NULL,
+                           validade_inicio            TIMESTAMP    NOT NULL,
+                           validade_fim               TIMESTAMP    NOT NULL,
+                           status                     VARCHAR(20)  NOT NULL DEFAULT 'AUTORIZADO',
+                           criado_em                  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-CREATE TYPE portaria.tipo_encomenda AS ENUM ('CURTO_PRAZO', 'MEDIO_PRAZO', 'LONGO_PRAZO');
-CREATE TYPE portaria.status_encomenda AS ENUM ('AGUARDANDO_RETIRADA', 'RETIRADA', 'EXPIRADA');
-
-CREATE TABLE portaria.visitante (
-                                    id UUID PRIMARY KEY,
-
-                                    nome VARCHAR(200) NOT NULL,
-                                    documento VARCHAR(20),
-                                    telefone VARCHAR(20),
-
-                                    tipo portaria.tipo_visitante NOT NULL,
-
-                                    autorizado_por_pessoa_id UUID NOT NULL,
-                                    autorizado_para_unidade_id UUID NOT NULL,
-
-                                    validade_inicio TIMESTAMP NOT NULL,
-                                    validade_fim TIMESTAMP NOT NULL,
-
-                                    status portaria.status_visitante NOT NULL,
-
-                                    criado_em TIMESTAMP NOT NULL
+                           CONSTRAINT ck_visitante_validade CHECK (validade_fim > validade_inicio)
 );
 
+CREATE INDEX idx_visitante_documento        ON visitante(documento);
+CREATE INDEX idx_visitante_unidade          ON visitante(autorizado_para_unidade_id);
+CREATE INDEX idx_visitante_status_validade  ON visitante(status, validade_inicio, validade_fim);
 
-CREATE TABLE portaria.registro_acesso (
-                                          id UUID PRIMARY KEY,
-
-                                          tipo_pessoa portaria.tipo_pessoa_acesso NOT NULL,
-
-                                          pessoa_id UUID,
-                                          visitante_id UUID,
-
-                                          unidade_id UUID,
-                                          veiculo_placa VARCHAR(10),
-
-                                          tipo_movimento portaria.tipo_movimento NOT NULL,
-                                          timestamp_acesso TIMESTAMP NOT NULL,
-
-                                          porteiro_id UUID NOT NULL,
-
-                                          observacoes VARCHAR(500)
+-- ───────────────────────────────────────────────────────────
+-- REGISTRO_ACESSO
+-- pessoa_id cobre todos os tipos:
+--   MORADOR / FUNCIONARIO / PRESTADOR → Pessoa.id do condominio-service
+--   VISITANTE                         → Visitante.id deste serviço
+-- ───────────────────────────────────────────────────────────
+CREATE TABLE registro_acesso (
+                                 id               UUID         PRIMARY KEY,
+                                 tipo_pessoa      VARCHAR(20)  NOT NULL,
+                                 pessoa_id        UUID         NOT NULL,
+                                 unidade_id       UUID,
+                                 veiculo_placa    VARCHAR(10),
+                                 tipo_movimento   VARCHAR(10)  NOT NULL,
+                                 timestamp_acesso TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                 porteiro_id      UUID         NOT NULL,
+                                 observacoes      VARCHAR(500)
 );
 
+CREATE INDEX idx_acesso_pessoa            ON registro_acesso(pessoa_id);
+CREATE INDEX idx_acesso_unidade_timestamp ON registro_acesso(unidade_id, timestamp_acesso);
+CREATE INDEX idx_acesso_timestamp         ON registro_acesso(timestamp_acesso);
 
-CREATE TABLE portaria.encomenda (
-                                    id UUID PRIMARY KEY,
-
-                                    unidade_id UUID NOT NULL,
-
-                                    tipo portaria.tipo_encomenda NOT NULL,
-
-                                    descricao VARCHAR(500),
-                                    codigo_rastreio VARCHAR(100),
-
-                                    status portaria.status_encomenda NOT NULL,
-
-                                    data_chegada TIMESTAMP NOT NULL,
-                                    data_retirada TIMESTAMP,
-
-                                    porteiro_recebedor_id UUID NOT NULL,
-                                    porteiro_entregador_id UUID,
-                                    retirado_por_pessoa_id UUID
+-- ───────────────────────────────────────────────────────────
+-- ENCOMENDA
+-- ───────────────────────────────────────────────────────────
+CREATE TABLE encomenda (
+                           id                     UUID         PRIMARY KEY,
+                           unidade_id             UUID         NOT NULL,
+                           tipo                   VARCHAR(20)  NOT NULL,
+                           descricao              VARCHAR(500),
+                           codigo_rastreio        VARCHAR(100),
+                           status                 VARCHAR(30)  NOT NULL DEFAULT 'AGUARDANDO_RETIRADA',
+                           data_chegada           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                           data_retirada          TIMESTAMP,
+                           porteiro_recebedor_id  UUID         NOT NULL,
+                           porteiro_entregador_id UUID,
+                           retirado_por_pessoa_id UUID
 );
 
-
-
-CREATE INDEX idx_visitante_documento
-    ON portaria.visitante(documento);
-
-CREATE INDEX idx_visitante_unidade
-    ON portaria.visitante(autorizado_para_unidade_id);
-
-CREATE INDEX idx_registro_unidade_data
-    ON portaria.registro_acesso(unidade_id, timestamp_acesso);
-
-CREATE INDEX idx_registro_pessoa
-    ON portaria.registro_acesso(pessoa_id);
-
-CREATE INDEX idx_encomenda_unidade_status
-    ON portaria.encomenda(unidade_id, status);
-
-CREATE INDEX idx_encomenda_tipo_status
-    ON portaria.encomenda(tipo, status);
-
-ALTER TABLE portaria.registro_acesso
-    ADD CONSTRAINT chk_pessoa_ou_visitante
-        CHECK (
-            (tipo_pessoa = 'VISITANTE' AND visitante_id IS NOT NULL AND pessoa_id IS NULL)
-                OR
-            (tipo_pessoa <> 'VISITANTE' AND pessoa_id IS NOT NULL AND visitante_id IS NULL)
-            );
+CREATE INDEX idx_encomenda_unidade_status ON encomenda(unidade_id, status);
+CREATE INDEX idx_encomenda_tipo_status    ON encomenda(tipo, status);

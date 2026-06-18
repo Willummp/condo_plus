@@ -3,13 +3,36 @@ spring:
     url: jdbc:postgresql://localhost:5432/condoplus
     username: postgres
     password: postgres
+
   data:
     redis:
       host: localhost
       port: 6379
+
   jpa:
-    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+# TTL curto para facilitar teste manual de expiração
+condoplus:
+  portaria:
+    encomendas:
+      curto-prazo-ttl-minutos: 5
+      medio-prazo-alerta-dias: 7
+      longo-prazo-alerta-dias: 30
+    expiracao-job:
+      cron: "0 * * * * *"           # a cada 1 minuto em dev
 
 condominio:
   service:
     url: http://localhost:8081
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
