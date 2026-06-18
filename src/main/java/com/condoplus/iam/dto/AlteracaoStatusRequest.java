@@ -1,10 +1,10 @@
 package	com.condoplus.iam.dto;
 
-import	com.condoplus.iam.domain.StatusCredencial;
-import	jakarta.validation.constraints.NotNull;
+import com.condoplus.iam.domain.StatusCredencial;
+import jakarta.validation.constraints.NotNull;
 
-public	record	AlteracaoStatusRequest(
+public record AlteracaoStatusRequest(
         @NotNull
-        StatusCredencial	novoStatus,
+        StatusCredencial novoStatus,
         String	motivo
 )	{}

@@ -1,14 +1,14 @@
 package	com.condoplus.iam.dto;
 
-import	jakarta.validation.constraints.Email;
-import	jakarta.validation.constraints.NotBlank;
-import	jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-public	record	LoginRequest(
+public record LoginRequest(
         @NotBlank
         @Email
-        String	email,
+        String email,
         @NotBlank
-        @Size(min	=	1,	max	=	128)
-        String	senha
+        @Size(min =	1, max	= 128)
+        String senha
 )	{}

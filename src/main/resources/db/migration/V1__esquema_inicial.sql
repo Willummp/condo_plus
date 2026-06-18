@@ -15,7 +15,7 @@ CREATE TABLE role (
                       nome VARCHAR(30) NOT NULL UNIQUE,
                       descricao VARCHAR(200)
 );
--- Seed das roles do sistema. IDs fixos para previsibilidade.
+
 INSERT INTO role (id, nome, descricao) VALUES
                                            (1, 'ADMIN', 'Administrador técnico do sistema'),
                                            (2, 'SINDICO', 'Gestor de negócio do condomínio'),
