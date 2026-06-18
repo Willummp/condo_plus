@@ -31,8 +31,16 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // health-check liberado (no TP3/AT vira liveness/readiness probe)
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        // endpoints de monitoramento expostos no application.yml.
+                        // Liberados de forma cirurgica (nao /actuator/**): so os que
+                        // expostos de proposito. Endpoints sensiveis (env, heapdump)
+                        // permaneceriam protegidos pelo anyRequest().authenticated().
+                        .requestMatchers(
+                                "/actuator/health",
+                                "/actuator/info",
+                                "/actuator/metrics",
+                                "/actuator/prometheus"
+                        ).permitAll()
                         // endpoints de auditoria liberados internamente (Gateway protege a borda)
                         .requestMatchers("/auditoria/**").permitAll()
                         // qualquer outra coisa exige autenticacao

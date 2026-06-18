@@ -115,6 +115,12 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Observabilidade (TP2): expoe metricas no formato Prometheus via Actuator -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 
     <build>
