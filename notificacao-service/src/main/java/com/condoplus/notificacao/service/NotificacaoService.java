@@ -1,12 +1,16 @@
 package com.condoplus.notificacao.service;
 
+import com.condoplus.notificacao.domain.Canal;
 import com.condoplus.notificacao.domain.Notificacao;
 import com.condoplus.notificacao.domain.StatusNotificacao;
 import com.condoplus.notificacao.dto.NotificacaoRequest;
 import com.condoplus.notificacao.repository.NotificacaoRepository;
+import com.condoplus.notificacao.repository.PreferenciaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
@@ -18,6 +22,9 @@ import java.util.UUID;
 public class NotificacaoService {
 
     private final NotificacaoRepository notificacaoRepository;
+    private final PreferenciaRepository preferenciaRepository;
+    private final ResolverDestinatariosService resolverService;
+    private final DespacharService despacharService;
 
     public Mono<Notificacao> solicitarNotificacao(NotificacaoRequest request) {
         log.info("Recebendo solicitacao REST para pessoaId={}", request.pessoaId());
@@ -47,5 +54,53 @@ public class NotificacaoService {
                     notif.setTentativas(notif.getTentativas() + 1);
                     return notificacaoRepository.save(notif);
                 });
+    }
+
+    public Flux<Notificacao> processarEvento(EventoNotificacao evento) {
+        log.info("Processando evento de notificação. tipo={} origemId={}",
+                evento.tipoEvento(), evento.eventoOrigemId());
+        return resolverService.resolverDestinatarios(evento)
+                .flatMap(pessoaId -> processarParaDestinatario(evento, pessoaId))
+                .doOnComplete(() -> log.debug("Fan-out completo para evento {}",
+                        evento.eventoOrigemId()));
+    }
+
+    private Flux<Notificacao> processarParaDestinatario(EventoNotificacao evento, UUID pessoaId) {
+        return preferenciaRepository
+                .findByPessoaIdAndTipoEventoAndAtivaTrue(pessoaId, evento.tipoEvento())
+                .flatMap(pref -> criarOuRecuperarNotificacao(evento, pessoaId, pref.getCanal()))
+                .flatMap(notif -> despacharSeNova(notif));
+    }
+
+    @Transactional
+    public Mono<Notificacao> criarOuRecuperarNotificacao(EventoNotificacao evento, UUID pessoaId, Canal canal) {
+        Notificacao nova = new Notificacao();
+        nova.setDestinatarioPessoaId(pessoaId);
+        nova.setTipoEvento(evento.tipoEvento());
+        nova.setEventoOrigemId(evento.eventoOrigemId());
+        nova.setCanal(canal);
+        nova.setTitulo(evento.titulo());
+        nova.setCorpo(evento.corpo());
+        nova.setStatus(StatusNotificacao.PENDENTE);
+        nova.setTentativas(0);
+        nova.setCriadaEm(LocalDateTime.now());
+
+        return notificacaoRepository.save(nova)
+                .onErrorResume(DataIntegrityViolationException.class, ex -> {
+                    log.debug("Notificação duplicada detectada (idempotência). " +
+                                    "pessoaId={} eventoOrigemId={} canal={}",
+                            pessoaId, evento.eventoOrigemId(), canal);
+                    return notificacaoRepository.findExistente(
+                            pessoaId, evento.eventoOrigemId(), canal);
+                });
+    }
+
+    private Mono<Notificacao> despacharSeNova(Notificacao notif) {
+        if (notif.getStatus() != StatusNotificacao.PENDENTE) {
+            log.debug("Notificação já processada anteriormente. id={} status={}",
+                    notif.getId(), notif.getStatus());
+            return Mono.just(notif);
+        }
+        return despacharService.despachar(notif);
     }
 }
