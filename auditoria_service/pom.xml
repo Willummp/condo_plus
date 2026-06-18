@@ -98,6 +98,13 @@
             <artifactId>mongodb</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- MongoDB embarcado em memoria para testes: nao depende de Docker -->
+        <dependency>
+            <groupId>de.flapdoodle.embed</groupId>
+            <artifactId>de.flapdoodle.embed.mongo.spring3x</artifactId>
+            <version>4.12.6</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
