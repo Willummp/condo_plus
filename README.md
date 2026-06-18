@@ -4,7 +4,7 @@
 | Aluno | Microsserviço sob Responsabilidade | Papel / Responsabilidade Adicional |
 |---|---|---|
 | **Lucas Ferreira** | `condominio-service` | Desenvolvimento do Core de Estrutura, Convivência e Testes de Integração |
-| **Fernando Telheiros** | `iam-service` | Gerenciamento de Credenciais de Acesso e Autenticação (Spring Security) |
+| **Caio** | `iam-service` | Gerenciamento de Credenciais de Acesso e Autenticação (Spring Security) |
 | **Integrante 3** | `portaria-service` | Controle de Acesso Físico, Visitantes e Recepção de Encomendas |
 | **Integrante 4** | `notificacao-service` | Envio de Alertas e Notificações (E-mail, SMS, Push) |
 | **Integrante 5** | `auditoria-service` | Histórico e Auditoria de Operações Críticas do Condomínio |

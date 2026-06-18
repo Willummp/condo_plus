@@ -1,4 +1,3 @@
-SET search_path TO iam;
 CREATE TABLE credencial_usuario (
                                     id UUID PRIMARY KEY,
                                     email VARCHAR(320) NOT NULL UNIQUE,
