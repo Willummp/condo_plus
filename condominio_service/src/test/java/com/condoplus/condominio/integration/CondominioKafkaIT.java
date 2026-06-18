@@ -23,6 +23,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -153,7 +154,7 @@ public class CondominioKafkaIT {
 
         // Aguarda um tempo de propagação e garante que não duplicou
         Thread.sleep(500);
-        long count = java.util.stream.StreamSupport.stream(pessoaRepository.findAll().spliterator(), false)
+        long count = StreamSupport.stream(pessoaRepository.findAll().spliterator(), false)
                 .filter(p -> p.getDocumento().equals(documento))
                 .count();
         assertThat(count).isEqualTo(1);
