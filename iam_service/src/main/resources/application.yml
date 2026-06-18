@@ -1,0 +1,66 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: iam-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/condoplus?currentSchema=iam
+    username: postgres
+    password: condoplus123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      default_schema: iam
+      format_sql: true
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: iam
+    default-schema: iam
+    baseline-on-migrate: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+    register-with-eureka: true
+    fetch-registry: true
+
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.uuid}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+  endpoint:
+    health:
+      show-details: when-authorized
+
+condoplus:
+  jwt:
+    secret: ${JWT_SECRET:troque-essa-chave-em-producao-precisa-ter-pelo-menos-32-bytes-ok}
+    expiration-seconds: 3600
+    refresh-grace-period-seconds: 1800
+    issuer: condo-plus-iam
+
+  security:
+    max-failed-attempts: 5
+    lockout-duration-minutes: 15
+
+logging:
+  level:
+    root: INFO
+    com.condoplus.iam: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
