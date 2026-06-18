@@ -54,14 +54,14 @@ consulta e rastreabilidade posterior.
 
 ## Como testar
 
-Com a aplicação rodando e um evento salvo em evento-teste.json:
+Com a aplicação rodando, a partir da raiz do monorepo:
 
 ```bash
 # 1. Grava um evento (espera 201 Created)
-curl.exe -H "Content-Type: application/json" -d "@evento-teste.json" http://localhost:8085/auditoria/registros
+curl.exe -H "Content-Type: application/json" -d "@auditoria_service/test-manual/evento-teste.json" http://localhost:8085/auditoria/registros
 
 # 2. Grava o MESMO evento de novo: a resposta traz o mesmo id (idempotência)
-curl.exe -H "Content-Type: application/json" -d "@evento-teste.json" http://localhost:8085/auditoria/registros
+curl.exe -H "Content-Type: application/json" -d "@auditoria_service/test-manual/evento-teste.json" http://localhost:8085/auditoria/registros
 
 # 3. Lista os registros (totalElements continua 1, provando a deduplicação)
 curl.exe http://localhost:8085/auditoria/registros
@@ -327,7 +327,8 @@ A protecao nao e uniforme — varia conforme o ator de cada rota:
 ## Exemplos de requisicao
 
 Como a validacao do token ocorre no Gateway, os exemplos abaixo simulam o que o
-Gateway injeta, batendo direto no servico com os headers de identidade.
+Gateway injeta, batendo direto no servico com os headers de identidade. Rode a
+partir da raiz do monorepo.
 
 ```bash
 # 1. Sem identidade: rejeitado (403) -- nao passou pelo Gateway
@@ -337,10 +338,10 @@ curl.exe -s -o NUL -w "[HTTP %{http_code}]" http://localhost:8085/auditoria/regi
 curl.exe -s -o NUL -w "[HTTP %{http_code}]" -H "X-User-Id: user-123" -H "X-User-Roles: MORADOR" http://localhost:8085/auditoria/registros
 
 # 3. Morador tentando triar anomalia: rejeitado (403) por falta de papel
-curl.exe -s -o NUL -w "[HTTP %{http_code}]" -X PATCH -H "X-User-Id: user-123" -H "X-User-Roles: MORADOR" -H "Content-Type: application/json" -d "@status.json" http://localhost:8085/auditoria/anomalias/algum-id/status
+curl.exe -s -o NUL -w "[HTTP %{http_code}]" -X PATCH -H "X-User-Id: user-123" -H "X-User-Roles: MORADOR" -H "Content-Type: application/json" -d "@auditoria_service/test-manual/status.json" http://localhost:8085/auditoria/anomalias/algum-id/status
 
 # 4. Sindico triando: autorizacao aceita (chega na regra de negocio)
-curl.exe -s -o NUL -w "[HTTP %{http_code}]" -X PATCH -H "X-User-Id: sindico-001" -H "X-User-Roles: SINDICO" -H "Content-Type: application/json" -d "@status.json" http://localhost:8085/auditoria/anomalias/algum-id/status
+curl.exe -s -o NUL -w "[HTTP %{http_code}]" -X PATCH -H "X-User-Id: sindico-001" -H "X-User-Roles: SINDICO" -H "Content-Type: application/json" -d "@auditoria_service/test-manual/status.json" http://localhost:8085/auditoria/anomalias/algum-id/status
 ```
 
 A sequencia de respostas (403, 200, 403, e aceito no caso 4) demonstra os dois
