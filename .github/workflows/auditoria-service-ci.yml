@@ -1,0 +1,55 @@
+# CI do auditoria-service.
+#
+# Escopo: este workflow cobre apenas o auditoria-service. O monorepo Condo+ tem
+# outros servicos; cada um pode ter seu proprio job/workflow. Isolar por servico
+# faz o pipeline do auditoria ficar verde de forma independente do estado dos
+# demais (um servico de outro integrante que nao compile nao derruba este CI).
+#
+# O filtro de paths faz o workflow rodar so quando algo do auditoria_service
+# (ou o pom raiz, que e o parent dele) muda -- evita rodar a toa em mudancas de
+# outros servicos.
+
+name: auditoria-service CI
+
+on:
+  push:
+    branches: [ "**" ]
+    paths:
+      - "auditoria_service/**"
+      - "pom.xml"
+      - ".github/workflows/auditoria-service-ci.yml"
+  pull_request:
+    paths:
+      - "auditoria_service/**"
+      - "pom.xml"
+      - ".github/workflows/auditoria-service-ci.yml"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Baixa o repositorio inteiro: o auditoria_service/pom.xml herda do pom.xml
+      # raiz via <relativePath>../pom.xml</relativePath>, entao o parent precisa
+      # estar presente no checkout para o Maven resolver as versoes.
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      # JDK 21 (Temurin), mesma distribuicao usada no desenvolvimento. O cache
+      # do Maven acelera execucoes seguintes (nao rebaixa dependencias do zero).
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+          cache: "maven"
+
+      # Builda e testa SO o modulo auditoria-service.
+      # -pl auditoria_service : limita ao modulo (project list).
+      # -am                   : tambem builda os modulos dos quais ele depende
+      #                         (aqui, resolve o parent). 'verify' roda compile +
+      #                         testes (surefire). O teste sobe MongoDB embarcado
+      #                         (flapdoodle) em memoria -- nao precisa de Docker
+      #                         nem de um Mongo externo no runner.
+      - name: Build e testes do auditoria-service
+        run: mvn -B -pl auditoria_service -am verify
