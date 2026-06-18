@@ -1,6 +1,5 @@
 package com.condoplus.portaria_service.repository;
 
-// VisitanteRepository.java
 import com.condoplus.portaria_service.model.entities.Visitante;
 import com.condoplus.portaria_service.model.enums.StatusVisitante;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,17 +13,18 @@ import java.util.UUID;
 
 @Repository
 public interface VisitanteRepository extends JpaRepository<Visitante, UUID> {
+
     List<Visitante> findByAutorizadoParaUnidadeId(UUID unidadeId);
+
     @Query("""
-SELECT v FROM Visitante v
-WHERE v.documento = :documento
-AND v.status = :status
-AND v.validadeInicio <= :agora
-AND v.validadeFim >= :agora
-""")
+            SELECT v FROM Visitante v
+            WHERE v.documento = :documento
+              AND v.status = :status
+              AND v.validadeInicio <= :agora
+              AND v.validadeFim >= :agora
+            """)
     List<Visitante> findAtivosPorDocumento(
             @Param("documento") String documento,
             @Param("status") StatusVisitante status,
             @Param("agora") LocalDateTime agora);
 }
-

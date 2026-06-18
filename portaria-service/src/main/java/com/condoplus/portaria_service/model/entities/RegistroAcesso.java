@@ -22,14 +22,17 @@ public class RegistroAcesso {
     private UUID id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_pessoa", nullable = false)
+    @Column(name = "tipo_pessoa", nullable = false, length = 20)
     private TipoPessoaAcesso tipoPessoa;
 
-    @Column(name = "pessoa_id")
+    /**
+     * ID da pessoa que entrou/saiu.
+     * Para MORADOR/FUNCIONARIO/PRESTADOR: aponta para Pessoa do condominio-service.
+     * Para VISITANTE: aponta para Visitante deste serviço.
+     * Um único campo — não há visitante_id separado.
+     */
+    @Column(name = "pessoa_id", nullable = false)
     private UUID pessoaId;
-
-    @Column(name = "visitante_id")
-    private UUID visitanteId;
 
     @Column(name = "unidade_id")
     private UUID unidadeId;
@@ -38,7 +41,7 @@ public class RegistroAcesso {
     private String veiculoPlaca;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_movimento", nullable = false)
+    @Column(name = "tipo_movimento", nullable = false, length = 10)
     private TipoMovimento tipoMovimento;
 
     @Column(name = "timestamp_acesso", nullable = false)
@@ -68,12 +71,7 @@ public class RegistroAcesso {
         if (porteiroId == null)
             throw new IllegalArgumentException("Porteiro obrigatório");
 
-        if (tipoPessoa == TipoPessoaAcesso.VISITANTE) {
-            if (visitanteId == null || pessoaId != null)
-                throw new IllegalArgumentException("Visitante deve ter visitanteId apenas");
-        } else {
-            if (pessoaId == null || visitanteId != null)
-                throw new IllegalArgumentException("Pessoa deve ter pessoaId apenas");
-        }
+        if (pessoaId == null)
+            throw new IllegalArgumentException("pessoa_id obrigatório");
     }
 }
