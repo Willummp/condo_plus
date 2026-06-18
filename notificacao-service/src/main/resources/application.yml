@@ -1,0 +1,94 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: notificacao-service
+
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/condoplus?currentSchema=notificacao
+    username: ${NOTIFICACAO_DB_USER:notificacao_user}
+    password: ${NOTIFICACAO_DB_PASSWORD:notificacao_password}
+    pool:
+      enabled: true
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 30m
+
+  flyway:
+    enabled: true
+    url: jdbc:postgresql://localhost:5432/condoplus?currentSchema=notificacao
+    user: ${NOTIFICACAO_DB_USER:notificacao_user}
+    password: ${NOTIFICACAO_DB_PASSWORD:notificacao_password}
+    locations: classpath:db/migration
+    schemas: notificacao
+    default-schema: notificacao
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    consumer:
+      group-id: notificacao-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.condoplus.events.*"
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.uuid}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      condominioService:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+
+condoplus:
+  notificacao:
+    retry:
+      max-tentativas: 3
+      backoff-segundos-inicial: 5
+    canais:
+      email:
+        habilitado: true
+        host: ${SMTP_HOST:localhost}
+        port: ${SMTP_PORT:25}
+      push:
+        habilitado: false
+      whatsapp:
+        habilitado: false
+
+logging:
+  level:
+    root: INFO
+    com.condoplus.notificacao: DEBUG
+    org.springframework.r2dbc: DEBUG
+    io.r2dbc.postgresql.QUERY: DEBUG
+    io.r2dbc.postgresql.PARAM: DEBUG
