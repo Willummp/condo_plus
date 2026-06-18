@@ -6,8 +6,8 @@ import com.condoplus.notificacao.domain.StatusNotificacao;
 import com.condoplus.notificacao.dto.NotificacaoRequest;
 import com.condoplus.notificacao.repository.NotificacaoRepository;
 import com.condoplus.notificacao.repository.PreferenciaRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,14 +17,24 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class NotificacaoService {
+
+    private static final Logger log = LoggerFactory.getLogger(NotificacaoService.class);
 
     private final NotificacaoRepository notificacaoRepository;
     private final PreferenciaRepository preferenciaRepository;
     private final ResolverDestinatariosService resolverService;
     private final DespacharService despacharService;
+
+    public NotificacaoService(NotificacaoRepository notificacaoRepository,
+                              PreferenciaRepository preferenciaRepository,
+                              ResolverDestinatariosService resolverService,
+                              DespacharService despacharService) {
+        this.notificacaoRepository = notificacaoRepository;
+        this.preferenciaRepository = preferenciaRepository;
+        this.resolverService = resolverService;
+        this.despacharService = despacharService;
+    }
 
     public Mono<Notificacao> solicitarNotificacao(NotificacaoRequest request) {
         log.info("Recebendo solicitacao REST para pessoaId={}", request.pessoaId());

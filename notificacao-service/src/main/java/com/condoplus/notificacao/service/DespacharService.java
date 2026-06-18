@@ -7,8 +7,8 @@ import com.condoplus.notificacao.domain.Notificacao;
 import com.condoplus.notificacao.domain.StatusNotificacao;
 import com.condoplus.notificacao.repository.NotificacaoRepository;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
@@ -17,12 +17,18 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class DespacharService {
+
+    private static final Logger log = LoggerFactory.getLogger(DespacharService.class);
+
     private final List<CanalEntrega> canais;
     private final NotificacaoRepository notificacaoRepository;
     private Map<Canal, CanalEntrega> canalPorTipo;
+
+    public DespacharService(List<CanalEntrega> canais, NotificacaoRepository notificacaoRepository) {
+        this.canais = canais;
+        this.notificacaoRepository = notificacaoRepository;
+    }
 
     @PostConstruct
     void inicializar() {

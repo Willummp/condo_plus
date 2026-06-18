@@ -1,6 +1,7 @@
 package com.condoplus.notificacao.exception;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +13,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
-@Slf4j
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(PreferenciaNaoEncontradaException.class)
     public ResponseEntity<ProblemDetail> lidarPreferenciaNaoEncontrada(
@@ -37,7 +39,7 @@ public class GlobalExceptionHandler {
         ProblemDetail p = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST, "Dados de entrada inválidos");
         p.setTitle("Validação falhou");
-        p.setType(URI.create("https://condoplus.local/errors/validacao"));
+        p.setType(URI.create("https://condoplus.local"));
         p.setProperty("erros", erros);
         return ResponseEntity.badRequest().body(p);
     }

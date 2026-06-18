@@ -4,7 +4,7 @@ import com.condoplus.notificacao.domain.PreferenciaNotificacao;
 import com.condoplus.notificacao.dto.AtualizarPreferenciaRequest;
 import com.condoplus.notificacao.service.PreferenciaService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,10 +15,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/notificacoes/preferencias")
-@RequiredArgsConstructor
+@Slf4j
 public class PreferenciaController {
 
     private final PreferenciaService preferenciaService;
+
+    public PreferenciaController(PreferenciaService preferenciaService) {
+        this.preferenciaService = preferenciaService;
+    }
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")

@@ -3,18 +3,22 @@ package com.condoplus.notificacao.canal;
 import com.condoplus.notificacao.config.properties.NotificacaoProperties;
 import com.condoplus.notificacao.domain.Canal;
 import com.condoplus.notificacao.domain.Notificacao;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import java.time.LocalDateTime;
 
 @Component
-@RequiredArgsConstructor
-@Slf4j
 public class EmailCanal implements CanalEntrega {
+
+    private static final Logger log = LoggerFactory.getLogger(EmailCanal.class);
     private final NotificacaoProperties properties;
+
+    public EmailCanal(NotificacaoProperties properties) {
+        this.properties = properties;
+    }
 
     @Override
     public Canal canalAtendido() {

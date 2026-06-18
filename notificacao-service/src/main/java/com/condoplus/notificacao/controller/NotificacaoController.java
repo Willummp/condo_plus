@@ -2,7 +2,7 @@ package com.condoplus.notificacao.controller;
 
 import com.condoplus.notificacao.domain.Notificacao;
 import com.condoplus.notificacao.service.NotificacaoService;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -13,10 +13,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/notificacoes")
-@RequiredArgsConstructor
+@Slf4j
 public class NotificacaoController {
 
     private final NotificacaoService notificacaoService;
+
+    public NotificacaoController(NotificacaoService notificacaoService) {
+        this.notificacaoService = notificacaoService;
+    }
 
     @GetMapping("/minhas")
     @PreAuthorize("isAuthenticated()")
