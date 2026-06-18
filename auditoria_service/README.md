@@ -257,3 +257,103 @@ idempotente -> MongoDB.
   comportamento do servico (arquivar, deduplicar), nao a infraestrutura Kafka
   (rebalance, offsets) — que e responsabilidade do framework e foi verificada
   manualmente.
+
+
+---
+
+# TP3 — Protecao de rotas
+
+No TP3 o servico passa a proteger suas rotas: requisicoes sem identidade valida
+sao rejeitadas, e a triagem de anomalias passa a exigir um papel especifico.
+
+## Onde mora a autenticacao (e por que nao aqui)
+
+A autenticacao propriamente dita — login, emissao de JWT e renovacao de token
+(refresh) — e responsabilidade do componente de autenticacao do ecossistema (o
+auth-service / API Gateway), nao do auditoria. Este servico e um **consumidor**
+dessa autenticacao: ele nao emite nem valida token; recebe a identidade do
+usuario ja validada e protege suas rotas com base nela.
+
+- **Por que essa separacao importa:** numa arquitetura de microsservicos, validar
+  o JWT em todo servico duplicaria a mesma logica em varios lugares e espalharia
+  a chave de assinatura por todo o sistema. Concentrar a validacao na borda (o
+  Gateway) significa um unico ponto que conhece como validar token; os servicos
+  internos confiam na identidade que ele propaga. O auditoria fazer login ou
+  emitir token, alem disso, violaria sua responsabilidade unica — ele audita, nao
+  autentica.
+
+## Como a protecao funciona aqui
+
+O Gateway valida o JWT e, ao encaminhar a requisicao para o servico, injeta a
+identidade do usuario em dois headers: `X-User-Id` e `X-User-Roles` (papeis
+separados por virgula, ex.: `SINDICO,MORADOR`).
+
+- **`GatewayAuthenticationFilter`:** um filtro le esses headers a cada requisicao.
+  Se o `X-User-Id` esta presente, popula o contexto de seguranca do Spring com o
+  usuario e seus papeis (cada papel vira uma authority `ROLE_<papel>`). Se esta
+  ausente, o contexto fica vazio.
+- **Confianca com verificacao:** o servico confia no Gateway, mas exige a prova de
+  que a requisicao passou por ele — a presenca do `X-User-Id`. Uma requisicao que
+  chega sem esse header (ou seja, sem ter passado pelo Gateway) nao autentica e e
+  rejeitada. O servico nao revalida o token porque isso ja foi feito na borda;
+  ele apenas confere que a identidade foi propagada.
+- **Stateless:** nenhuma sessao e criada; cada requisicao carrega sua propria
+  identidade nos headers. Coerente com um microsservico atras de Gateway.
+
+## Autorizacao por papel
+
+A protecao nao e uniforme — varia conforme o ator de cada rota:
+
+- **Rotas de auditoria (gravar e consultar registros):** sao trafego entre
+  servicos (os demais microsservicos publicam eventos; o sistema consulta o
+  historico). Exigem apenas estar autenticado, isto e, ter passado pelo Gateway.
+- **Triagem de anomalia (`PATCH /auditoria/anomalias/{id}/status`):** exige o
+  papel `SINDICO` ou `ADMIN`. Mudar o status de uma anomalia — marcar um alerta
+  de seguranca como reconhecido — e uma acao humana de decisao, nao um fluxo
+  automatico. Se qualquer usuario autenticado pudesse faze-lo, um morador poderia
+  silenciar o alerta de que ele proprio falhou logins repetidamente, esvaziando o
+  proposito do servico. Por isso essa rota especifica e mais restrita que as
+  demais.
+
+## Endpoints publicos e protegidos
+
+| Acesso     | Endpoint                                      | Exige                       |
+|------------|-----------------------------------------------|-----------------------------|
+| Publico    | /actuator/health, /info, /metrics, /prometheus| nada                        |
+| Protegido  | /auditoria/registros (GET, POST)              | autenticado (via Gateway)   |
+| Protegido  | /auditoria/anomalias (GET)                    | autenticado (via Gateway)   |
+| Protegido  | PATCH /auditoria/anomalias/{id}/status        | papel SINDICO ou ADMIN      |
+
+## Exemplos de requisicao
+
+Como a validacao do token ocorre no Gateway, os exemplos abaixo simulam o que o
+Gateway injeta, batendo direto no servico com os headers de identidade.
+
+```bash
+# 1. Sem identidade: rejeitado (403) -- nao passou pelo Gateway
+curl.exe -s -o NUL -w "[HTTP %{http_code}]" http://localhost:8085/auditoria/registros
+
+# 2. Autenticado (morador): consulta liberada (200)
+curl.exe -s -o NUL -w "[HTTP %{http_code}]" -H "X-User-Id: user-123" -H "X-User-Roles: MORADOR" http://localhost:8085/auditoria/registros
+
+# 3. Morador tentando triar anomalia: rejeitado (403) por falta de papel
+curl.exe -s -o NUL -w "[HTTP %{http_code}]" -X PATCH -H "X-User-Id: user-123" -H "X-User-Roles: MORADOR" -H "Content-Type: application/json" -d "@status.json" http://localhost:8085/auditoria/anomalias/algum-id/status
+
+# 4. Sindico triando: autorizacao aceita (chega na regra de negocio)
+curl.exe -s -o NUL -w "[HTTP %{http_code}]" -X PATCH -H "X-User-Id: sindico-001" -H "X-User-Roles: SINDICO" -H "Content-Type: application/json" -d "@status.json" http://localhost:8085/auditoria/anomalias/algum-id/status
+```
+
+A sequencia de respostas (403, 200, 403, e aceito no caso 4) demonstra os dois
+eixos: autenticacao (presenca da identidade do Gateway) e autorizacao (papel
+necessario para acoes sensiveis).
+
+## Limitacoes conscientes (TP3)
+
+- **Os papeis dependem do contrato do Gateway:** os nomes `SINDICO`/`ADMIN`
+  precisam casar com os papeis que o componente de autenticacao emite nos
+  headers. Se o contrato do grupo usar outros nomes, basta ajustar as strings no
+  SecurityConfig — a logica nao muda.
+- **O servico confia no header sem reassinatura:** num ambiente real, garantir-se
+  ia (via rede/mTLS) que so o Gateway pode injetar esses headers, para um cliente
+  externo nao forja-los. No escopo do trabalho, com os servicos atras do Gateway,
+  a confianca na borda e suficiente.
