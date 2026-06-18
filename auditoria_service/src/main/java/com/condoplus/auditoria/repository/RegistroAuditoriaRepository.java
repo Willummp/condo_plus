@@ -58,6 +58,15 @@ public interface RegistroAuditoriaRepository
      */
     Page<RegistroAuditoria> findAllByOrderByTimestampDesc(Pageable pageable);
 
+
+    /**
+     * Busca (lista) eventos de um tipo, de uma entidade, a partir de um instante.
+     * Diferente do count: aqui precisamos dos registros em si para inspecionar
+     * o IP no payload (campo nao-indexado, filtrado em memoria pela regra).
+     */
+    java.util.List<RegistroAuditoria> findByTipoEventoAndEntidadeAfetada_IdAndTimestampGreaterThanEqual(
+            TipoEvento tipoEvento, String entidadeId, java.time.Instant inicio);
+
     /**
      * Conta eventos de um tipo, de uma entidade, a partir de um instante.
      * E a query da JANELA DESLIZANTE: passamos inicio = (timestamp do evento - 60s)

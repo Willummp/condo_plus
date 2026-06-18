@@ -51,6 +51,7 @@ public class EventoMapper {
             case "LoginFalhado" -> TipoEvento.LOGIN_FALHADO;
             case "AcessoRegistrado" -> TipoEvento.ACESSO_REGISTRADO;
             case "VisitanteAutorizado" -> TipoEvento.VISITANTE_AUTORIZADO;
+            case "LoginRealizado" -> TipoEvento.LOGIN_REALIZADO;
             default -> TipoEvento.OUTRO;
 
         };

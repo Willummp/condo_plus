@@ -46,6 +46,9 @@ public class EventoConsumer {
     @KafkaListener(topics = "visitantes.autorizados", groupId = "auditoria-group")
     public void consumirVisitanteAutorizado(EventEnvelope envelope) { processar(envelope); }
 
+    @KafkaListener(topics = "logins.realizados", groupId = "auditoria-group")
+    public void consumirLoginRealizado(EventEnvelope envelope) { processar(envelope); }
+
     private void processar(EventEnvelope envelope) {
         if (envelope == null) {
             log.warn("Envelope nulo recebido (provavel mensagem malformada). Ignorando.");
