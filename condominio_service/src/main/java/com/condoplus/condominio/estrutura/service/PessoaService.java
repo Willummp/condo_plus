@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
@@ -66,7 +67,7 @@ public class PessoaService {
             CriarCredencialRequest credRequest = new CriarCredencialRequest(
                 req.email(),
                 req.senhaInicial(),
-                req.role()
+                Set.of(req.role())
             );
             
             CredencialResponse credResponse = iamClient.criarCredencial(credRequest).block();
