@@ -3,10 +3,13 @@ package com.condoplus.auditoria.messaging;
 import com.condoplus.auditoria.domain.EntidadeAfetada;
 import com.condoplus.auditoria.domain.RegistroAuditoria;
 import com.condoplus.auditoria.domain.TipoEvento;
+import com.condoplus.auditoria.domain.PessoaIniciadora;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
+
 
 /**
  * Converte um EventEnvelope (vindo do Kafka) num RegistroAuditoria.
@@ -26,6 +29,7 @@ public class EventoMapper {
                 .tipoEvento(mapearTipo(envelope.eventType()))
                 .servicoOrigem(envelope.originService())
                 .entidadeAfetada(extrairEntidade(envelope))
+                .pessoaIniciadora(extrairIniciador(envelope))
                 .payload(envelope.payload())
                 .build();
     }
@@ -46,6 +50,7 @@ public class EventoMapper {
             case "CredencialCriada" -> TipoEvento.CREDENCIAL_CRIADA;
             case "LoginFalhado" -> TipoEvento.LOGIN_FALHADO;
             case "AcessoRegistrado" -> TipoEvento.ACESSO_REGISTRADO;
+            case "VisitanteAutorizado" -> TipoEvento.VISITANTE_AUTORIZADO;
             default -> TipoEvento.OUTRO;
 
         };
@@ -61,6 +66,7 @@ public class EventoMapper {
         if (payload == null) {
             return null;
         }
+
         // Heuristica simples: o "id" do payload identifica a entidade,
         // e o eventType sugere o tipo dela.
         Object id = payload.get("id");
@@ -71,5 +77,29 @@ public class EventoMapper {
                 .tipo(envelope.eventType()) // ex: "MultaAplicada"
                 .id(id.toString())
                 .build();
+    }
+    /**
+     * Extrai o iniciador (quem agiu) do payload, se presente.
+     * Espera os campos iniciadorId (UUID), iniciadorNome e iniciadorRoles.
+     * Tolerante: payload sem iniciador, ou com UUID invalido, retorna null —
+     * o evento e arquivado mesmo assim (auditoria nunca descarta o evento).
+     */
+    private PessoaIniciadora extrairIniciador(EventEnvelope envelope) {
+        Map<String, Object> payload = envelope.payload();
+        if (payload == null || payload.get("iniciadorId") == null) {
+            return null;
+        }
+        try {
+            UUID id = UUID.fromString(payload.get("iniciadorId").toString());
+            Object nome = payload.get("iniciadorNome");
+            Object roles = payload.get("iniciadorRoles");
+            return PessoaIniciadora.builder()
+                    .id(id)
+                    .nomeCached(nome != null ? nome.toString() : null)
+                    .roles(roles != null ? roles.toString() : null)
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return null; // iniciadorId nao e UUID valido: tolera e segue
+        }
     }
 }

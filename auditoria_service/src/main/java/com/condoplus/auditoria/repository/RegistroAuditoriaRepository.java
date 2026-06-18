@@ -65,4 +65,11 @@ public interface RegistroAuditoriaRepository
      */
     long countByTipoEventoAndEntidadeAfetada_IdAndTimestampGreaterThanEqual(
             TipoEvento tipoEvento, String entidadeId, java.time.Instant inicio);
+    /**
+     * Conta eventos de um tipo, de um INICIADOR (quem agiu), a partir de um instante.
+     * Janela deslizante agrupada por pessoaIniciadora.id — usada para detectar
+     * um mesmo ator fazendo algo em excesso (ex: autorizar muitos visitantes).
+     */
+    long countByTipoEventoAndPessoaIniciadora_IdAndTimestampGreaterThanEqual(
+            TipoEvento tipoEvento, java.util.UUID iniciadorId, java.time.Instant inicio);
 }
