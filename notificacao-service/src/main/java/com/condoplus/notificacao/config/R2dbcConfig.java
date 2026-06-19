@@ -12,7 +12,9 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
+import org.springframework.data.r2dbc.config.EnableR2dbcAuditing;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
 import reactor.core.publisher.Mono;
 
@@ -21,6 +23,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Configuration
+@EnableR2dbcAuditing
+@EnableR2dbcRepositories
 public class R2dbcConfig extends AbstractR2dbcConfiguration {
 
     private final ConnectionFactory connectionFactory;

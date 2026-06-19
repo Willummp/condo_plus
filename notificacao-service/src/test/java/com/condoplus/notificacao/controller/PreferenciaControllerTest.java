@@ -4,15 +4,18 @@ import com.condoplus.notificacao.domain.Canal;
 import com.condoplus.notificacao.domain.PreferenciaNotificacao;
 import com.condoplus.notificacao.domain.TipoEvento;
 import com.condoplus.notificacao.dto.AtualizarPreferenciaRequest;
-import com.condoplus.notificacao.dto.PreferenciaResponse;
 import com.condoplus.notificacao.service.PreferenciaService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
+import java.util.List;
 import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -24,7 +27,6 @@ class PreferenciaControllerTest {
     @MockBean private PreferenciaService preferenciaService;
 
     @Test
-    @WithMockUser(username = "11111111-1111-1111-1111-111111111111")
     void actualizarPreferenciaRetorna200() {
         UUID pessoaId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         AtualizarPreferenciaRequest req = new AtualizarPreferenciaRequest(
@@ -39,7 +41,14 @@ class PreferenciaControllerTest {
         when(preferenciaService.atualizar(eq(pessoaId), any()))
                 .thenReturn(Mono.just(pref));
 
-        webTestClient.put()
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                pessoaId.toString(), null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
+        webTestClient
+                .mutateWith(SecurityMockServerConfigurers.csrf())
+                .mutateWith(SecurityMockServerConfigurers.mockAuthentication(auth))
+                .put()
                 .uri("/notificacoes/preferencias")
                 .bodyValue(req)
                 .exchange()

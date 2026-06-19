@@ -27,5 +27,11 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Run Package and Verify (notificacao-service)
+      - name: Build
         run: mvn package -pl notificacao-service -DskipTests
+
+      - name: Unit Tests
+        run: mvn test -pl notificacao-service
+
+      - name: Integration Tests
+        run: mvn verify -pl notificacao-service -DskipTests=false
