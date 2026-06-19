@@ -158,9 +158,6 @@
                         <eureka.client.register-with-eureka>false</eureka.client.register-with-eureka>
                         <eureka.client.fetch-registry>false</eureka.client.fetch-registry>
                         <spring.cloud.discovery.enabled>false</spring.cloud.discovery.enabled>
-                        <spring.flyway.default-schema>public</spring.flyway.default-schema>
-                        <spring.jpa.properties.default_schema>public</spring.jpa.properties.default_schema>
-                        <spring.jpa.properties.hibernate.default_schema>public</spring.jpa.properties.hibernate.default_schema>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

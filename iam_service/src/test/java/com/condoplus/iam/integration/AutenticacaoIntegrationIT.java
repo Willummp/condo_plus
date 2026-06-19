@@ -44,11 +44,8 @@ class AutenticacaoIntegrationIT {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.flyway.schemas", () -> "public");
-        registry.add(
-                "spring.jpa.properties.hibernate.default_schema",
-                () -> "public"
-        );
+        registry.add("spring.flyway.schemas", () -> "iam");
+        registry.add("spring.flyway.default-schema", () -> "iam");
     }
 
     @Autowired
