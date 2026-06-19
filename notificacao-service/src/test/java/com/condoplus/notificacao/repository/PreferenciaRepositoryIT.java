@@ -4,17 +4,34 @@ import com.condoplus.notificacao.domain.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import java.util.UUID;
 
 @DataR2dbcTest
 @Testcontainers
+@Import(PreferenciaRepositoryIT.Callbacks.class)
 class PreferenciaRepositoryIT {
+
+    @TestConfiguration
+    static class Callbacks {
+        @Bean
+        BeforeConvertCallback<PreferenciaNotificacao> preferenciaIdGenerator() {
+            return (p, sql) -> {
+                if (p.getId() == null) p.setId(UUID.randomUUID());
+                return Mono.just(p);
+            };
+        }
+    }
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
 
