@@ -25,6 +25,7 @@
 
     <modules>
         <module>condominio_service</module>
+        <module>iam_service</module>
         <module>infra/eureka-server</module>
         <module>infra/api-gateway</module>
     </modules>
