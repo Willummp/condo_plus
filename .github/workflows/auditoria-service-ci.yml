@@ -26,7 +26,10 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    # Ubuntu 22.04 fixo (nao ubuntu-latest): a versao do mongo embarcado
+    # (flapdoodle) usada nos testes nao resolve o pacote do MongoDB 7.0.4 no
+    # Ubuntu 24, falhando ao baixar o binario. O 22.04 e resolvido corretamente.
+    runs-on: ubuntu-22.04
 
     steps:
       # Baixa o repositorio inteiro: o auditoria_service/pom.xml herda do pom.xml
