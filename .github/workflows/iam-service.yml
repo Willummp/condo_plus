@@ -27,5 +27,8 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Run Tests (iam_service)
-        run: mvn verify -pl iam_service
+      - name: Unit Tests (iam_service)
+        run: mvn test -pl iam_service
+
+      - name: Integration Tests (iam_service)
+        run: mvn failsafe:integration-test failsafe:verify -pl iam_service
