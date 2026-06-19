@@ -1,7 +1,6 @@
 package com.condoplus.condominio.consumer;
 
 import com.condoplus.condominio.event.CredencialCriadaEvent;
-import com.condoplus.condominio.estrutura.domain.Pessoa;
 import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,36 +17,21 @@ public class CredencialCriadaConsumer {
 
     @KafkaListener(topics = "credenciais.criadas", groupId = "condominio-group")
     public void consumir(CredencialCriadaEvent event) {
-        // Restaurar CorrelationId para rastreamento nos logs
         if (event.correlationId() != null) {
             MDC.put("correlationId", event.correlationId());
         }
-
         try {
-            log.info("Recebido evento CredencialCriada no Kafka para o documento: {} [tp2]", event.documento());
+            log.info("Recebido evento CredencialCriada [tp2]. credencialId={} email={}",
+                    event.credencialId(), event.email());
 
-            // Garantir idempotência: verificar se pessoa já existe por documento
-            if (pessoaRepository.existsByDocumento(event.documento())) {
-                log.warn("Mensagem duplicada ou pessoa já existente com o documento {} [tp2]. Ignorando processamento.", event.documento());
-                return;
-            }
-
-            // Garantir idempotência: verificar se pessoa já existe por credencialId
             if (event.credencialId() != null && pessoaRepository.existsByCredencialId(event.credencialId())) {
-                log.warn("Mensagem duplicada ou pessoa já existente com a credencialId {} [tp2]. Ignorando processamento.", event.credencialId());
+                log.info("Credencial {} já vinculada a uma pessoa no condomínio. Ignorando [tp2].",
+                        event.credencialId());
                 return;
             }
 
-            Pessoa novaPessoa = Pessoa.criar(
-                    event.credencialId(),
-                    event.nomeCompleto(),
-                    event.documento(),
-                    event.telefone(),
-                    event.email()
-            );
-
-            pessoaRepository.save(novaPessoa);
-            log.info("Pessoa criada assincronamente a partir de evento do IAM [tp2]. id={}", novaPessoa.getId());
+            log.warn("Credencial {} criada no IAM sem pessoa correspondente no condomínio [tp2]. " +
+                    "O cadastro da pessoa deve ser realizado via POST /pessoas.", event.credencialId());
         } finally {
             MDC.clear();
         }
