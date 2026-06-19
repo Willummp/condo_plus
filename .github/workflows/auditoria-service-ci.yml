@@ -44,12 +44,15 @@ jobs:
           java-version: "21"
           cache: "maven"
 
-      # Builda e testa SO o modulo auditoria-service.
-      # -pl auditoria_service : limita ao modulo (project list).
-      # -am                   : tambem builda os modulos dos quais ele depende
-      #                         (aqui, resolve o parent). 'verify' roda compile +
-      #                         testes (surefire). O teste sobe MongoDB embarcado
-      #                         (flapdoodle) em memoria -- nao precisa de Docker
-      #                         nem de um Mongo externo no runner.
+       # Builda e testa SO o modulo auditoria-service.
+      # -f auditoria_service/pom.xml : aponta o Maven direto para o POM do
+      #                                modulo, ignorando o <modules> do POM raiz
+      #                                (que pode listar modulos de outros
+      #                                integrantes que nao existem nesta branch).
+      #                                O parent ainda e resolvido pelo
+      #                                <relativePath>../pom.xml</relativePath>
+      #                                declarado no POM filho.
+      # verify : roda compile + testes (surefire). O teste sobe MongoDB embarcado
+      #          (flapdoodle) em memoria, sem precisar de Docker no runner.
       - name: Build e testes do auditoria-service
-        run: mvn -B -pl auditoria_service -am verify
+        run: mvn -B -f auditoria_service/pom.xml verify
