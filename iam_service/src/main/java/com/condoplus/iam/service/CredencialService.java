@@ -7,12 +7,14 @@ import com.condoplus.iam.domain.TipoRole;
 import com.condoplus.iam.dto.AlteracaoStatusRequest;
 import com.condoplus.iam.dto.CredencialResponse;
 import com.condoplus.iam.dto.NovaCredencialRequest;
+import com.condoplus.iam.event.CredencialCriadaEvent;
 import com.condoplus.iam.exception.CredencialNaoEncontradaException;
 import com.condoplus.iam.exception.EmailJaExisteException;
 import com.condoplus.iam.repository.CredencialRepository;
 import com.condoplus.iam.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,7 @@ public class CredencialService {
     private final CredencialRepository credencialRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EventoPublicador eventoPublicador;
 
     @Transactional
     public CredencialResponse criar(NovaCredencialRequest req) {
@@ -40,8 +43,7 @@ public class CredencialService {
         Set<Role> rolesAnexadas = req.roles().stream()
                 .map(tipo -> roleRepository.findByNome(tipo)
                         .orElseThrow(() -> new IllegalStateException(
-                                "Role " + tipo
-                                        + " não encontrada no banco (seed faltando)"
+                                "Role " + tipo + " não encontrada no banco (seed faltando)"
                         )))
                 .collect(Collectors.toSet());
 
@@ -54,11 +56,18 @@ public class CredencialService {
 
         CredencialUsuario salva = credencialRepository.save(nova);
 
-        log.info(
-                "Credencial criada. id={} email={}",
+        log.info("Credencial criada. id={} email={}", salva.getId(), salva.getEmail());
+
+        Set<String> rolesStr = salva.getRoles().stream()
+                .map(r -> r.getNome().name())
+                .collect(Collectors.toSet());
+
+        eventoPublicador.publicarCredencialCriada(new CredencialCriadaEvent(
                 salva.getId(),
-                salva.getEmail()
-        );
+                salva.getEmail(),
+                rolesStr,
+                MDC.get("correlationId")
+        ));
 
         return toResponse(salva);
     }
@@ -91,10 +100,7 @@ public class CredencialService {
 
         log.warn(
                 "Status de credencial alterado. id={} de={} para={} motivo={}",
-                id,
-                anterior,
-                req.novoStatus(),
-                req.motivo()
+                id, anterior, req.novoStatus(), req.motivo()
         );
     }
 

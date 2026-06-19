@@ -46,6 +46,7 @@ class AutenticacaoIntegrationIT {
         registry.add("spring.datasource.password", postgres::getPassword);
         registry.add("spring.flyway.schemas", () -> "iam");
         registry.add("spring.flyway.default-schema", () -> "iam");
+        registry.add("spring.kafka.bootstrap-servers", () -> "localhost:9092");
     }
 
     @Autowired
@@ -93,7 +94,8 @@ class AutenticacaoIntegrationIT {
                                 .content(objectMapper.writeValueAsString(req))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
                 .andExpect(jsonPath("$.expiresInSeconds").exists());
     }
 }

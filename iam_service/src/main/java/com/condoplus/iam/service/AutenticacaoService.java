@@ -15,8 +15,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.jsonwebtoken.Claims;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -63,12 +65,49 @@ public class AutenticacaoService {
                 credencial.getId()
         );
 
-        String token = jwtService.gerarToken(credencial);
+        String accessToken = jwtService.gerarToken(credencial);
+        String refreshToken = jwtService.gerarRefreshToken(credencial);
 
-        return new TokenResponse(
-                token,
-                jwtProperties.expirationSeconds()
-        );
+        return new TokenResponse(accessToken, refreshToken, jwtProperties.expirationSeconds());
+    }
+
+    @Transactional
+    public TokenResponse renovarToken(String refreshToken) {
+        Claims claims;
+        try {
+            claims = jwtService.extrairClaims(refreshToken);
+        } catch (Exception e) {
+            log.warn("Refresh token inválido ou expirado");
+            throw new CredenciaisInvalidasException();
+        }
+
+        String tokenType = claims.get("tokenType", String.class);
+        if (!"refresh".equals(tokenType)) {
+            log.warn("Token fornecido não é do tipo refresh");
+            throw new CredenciaisInvalidasException();
+        }
+
+        UUID credencialId;
+        try {
+            credencialId = UUID.fromString(claims.getSubject());
+        } catch (Exception e) {
+            throw new CredenciaisInvalidasException();
+        }
+
+        CredencialUsuario credencial = credencialRepository.findById(credencialId)
+                .orElseThrow(() -> {
+                    log.warn("Credencial não encontrada durante refresh. id={}", credencialId);
+                    return new CredenciaisInvalidasException();
+                });
+
+        verificarBloqueio(credencial);
+
+        String novoAccessToken = jwtService.gerarToken(credencial);
+        String novoRefreshToken = jwtService.gerarRefreshToken(credencial);
+
+        log.info("Tokens renovados. credencialId={}", credencialId);
+
+        return new TokenResponse(novoAccessToken, novoRefreshToken, jwtProperties.expirationSeconds());
     }
 
     private void verificarBloqueio(CredencialUsuario credencial) {

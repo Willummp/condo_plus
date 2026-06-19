@@ -89,7 +89,7 @@ class AutenticacaoServiceTest {
 
         var response = autenticacaoService.autenticar(req);
 
-        assertThat(response.token()).isEqualTo("token-fake");
+        assertThat(response.accessToken()).isEqualTo("token-fake");
         assertThat(response.expiresInSeconds()).isEqualTo(3600);
 
         verify(credencialRepository).save(cred);
@@ -221,7 +221,7 @@ class AutenticacaoServiceTest {
 
         var response = autenticacaoService.autenticar(req);
 
-        assertThat(response.token()).isEqualTo("token-fake");
+        assertThat(response.accessToken()).isEqualTo("token-fake");
         assertThat(cred.getStatus()).isEqualTo(StatusCredencial.ATIVO);
         assertThat(cred.getTentativasFalhas()).isZero();
     }

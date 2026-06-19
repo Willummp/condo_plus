@@ -39,6 +39,7 @@ class AutenticacaoControllerTest {
                 .thenReturn(
                         new TokenResponse(
                                 "token-jwt-fake",
+                                "refresh-token-fake",
                                 3600L
                         )
                 );
@@ -54,7 +55,8 @@ class AutenticacaoControllerTest {
                                 .content(objectMapper.writeValueAsString(req))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("token-jwt-fake"))
+                .andExpect(jsonPath("$.accessToken").value("token-jwt-fake"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-token-fake"))
                 .andExpect(jsonPath("$.expiresInSeconds").value(3600));
     }
 

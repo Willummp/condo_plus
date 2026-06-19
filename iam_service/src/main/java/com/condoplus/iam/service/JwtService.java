@@ -43,6 +43,22 @@ public class JwtService	{
         return	token;
     }
 
+    public String gerarRefreshToken(CredencialUsuario credencial) {
+        Instant agora = Instant.now();
+        Instant expiracao = agora.plusSeconds(7L * 24 * 3600);
+        String token = Jwts.builder()
+                .subject(credencial.getId().toString())
+                .claim("tokenType", "refresh")
+                .issuer(jwtProperties.issuer())
+                .issuedAt(Date.from(agora))
+                .expiration(Date.from(expiracao))
+                .id(UUID.randomUUID().toString())
+                .signWith(getSigningKey())
+                .compact();
+        log.debug("Refresh token gerado para credencial id={}", credencial.getId());
+        return token;
+    }
+
     public Claims extrairClaims(String token)	{
         return Jwts.parser()
                 .verifyWith(getSigningKey())

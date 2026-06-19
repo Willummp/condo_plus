@@ -1,6 +1,7 @@
-package	com.condoplus.iam.dto;
+package com.condoplus.iam.dto;
 
 public record TokenResponse(
-        String token,
+        String accessToken,
+        String refreshToken,
         long expiresInSeconds
-)	{}
+) {}

@@ -5,6 +5,14 @@ spring:
   application:
     name: iam-service
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
   datasource:
     url: jdbc:postgresql://localhost:5432/condoplus?currentSchema=iam
     username: postgres
@@ -49,7 +57,7 @@ management:
 
 condoplus:
   jwt:
-    secret: ${JWT_SECRET:troque-essa-chave-em-producao-precisa-ter-pelo-menos-32-bytes-ok}
+    secret: ${JWT_SECRET:CondoPlusSuperSecretKeyForJWTAuth2026!}
     expiration-seconds: 3600
     refresh-grace-period-seconds: 1800
     issuer: condo-plus-iam
