@@ -10,5 +10,4 @@ public record CredencialCriadaEvent(
         String telefone,
         String role,
         String correlationId
-) {
-}
+) {}
