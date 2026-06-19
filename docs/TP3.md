@@ -1,3 +1,104 @@
+# TP3 — Autenticação e Autorização em Microservices
+
+## 1. Objetivo
+
+Implementar autenticação e autorização em uma arquitetura de microsserviços.
+
+O sistema deverá possuir:
+- Um microserviço **dedicado à autenticação**
+- Pelo menos **um microserviço com rotas protegidas**
+
+---
+
+## 2. Requisitos Obrigatórios
+
+### 2.1 Microsserviço de Autenticação
+
+Um microserviço responsável pela autenticação dos usuários. Exemplos de nome: `auth-service`, `authentication-service`, `identity-service`.
+
+Deve disponibilizar:
+
+| Endpoint | Descrição |
+|---|---|
+| `POST /auth/login` | Autenticação do usuário |
+| `POST /auth/refresh` | Renovação do token |
+
+### 2.2 Tecnologia de Autenticação
+
+Obrigatoriamente uma das opções abaixo:
+
+- **JWT** (JSON Web Token)
+- **Keycloak**
+
+> Não serão aceitas outras formas de autenticação.
+
+### 2.3 Proteção de Rotas
+
+Pelo menos um outro microserviço com rotas protegidas. Exemplos:
+- `GET /api/clientes`
+- `POST /api/pedidos`
+- `GET /api/containers`
+
+O acesso deve exigir autenticação válida.
+
+### 2.4 Fluxo Esperado
+
+1. Usuário realiza autenticação
+2. Sistema retorna credencial válida
+3. Usuário utiliza a credencial para acessar recursos protegidos
+4. Requisições **sem autenticação** devem ser **rejeitadas**
+5. Requisições **autenticadas** devem ser processadas normalmente
+6. Quando necessário, usuário usa o endpoint de refresh para obter novo token
+
+---
+
+## 3. Demonstração (avaliação)
+
+Durante a avaliação deve ser demonstrado:
+
+- [ ] Tentativa de acesso **sem** autenticação (deve ser rejeitada)
+- [ ] Autenticação realizada com sucesso
+- [ ] Obtenção do token
+- [ ] Utilização do endpoint de **refresh**
+- [ ] Obtenção de novo token via refresh
+- [ ] Acesso a rota protegida utilizando o token
+- [ ] Rejeição de credenciais inválidas
+
+---
+
+## 4. Documentação (README)
+
+O README deve explicar:
+
+- Arquitetura da solução
+- Tecnologia escolhida (JWT ou Keycloak)
+- Como executar os serviços
+- Como realizar autenticação
+- Como utilizar o endpoint de refresh
+- Quais endpoints são **públicos**
+- Quais endpoints são **protegidos**
+- Exemplos de requisições para teste
+
+---
+
+## 5. Entregáveis
+
+- Código-fonte completo
+- Arquivo README
+- Arquivos de configuração necessários para execução do ambiente
+
+---
+
+## 6. Observações
+
+- O microserviço de autenticação deve ser **independente** dos demais serviços.
+- O token deve ser enviado nas requisições para acesso aos recursos protegidos.
+- A solução deve ser **executável e demonstrável** durante a apresentação.
+- O mecanismo de autenticação deve utilizar **obrigatoriamente JWT ou Keycloak**.
+
+---
+---
+
 # 🔐 TP3 — Autenticação e Autorização com JWT (API Gateway)
 
 Este guia explica a arquitetura de segurança implementada no **Condo+** para o **TP3**, a tecnologia utilizada, a lista de endpoints públicos e protegidos, e como simular o fluxo de login, acesso protegido e refresh de tokens.
