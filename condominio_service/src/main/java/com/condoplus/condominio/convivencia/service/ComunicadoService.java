@@ -9,6 +9,7 @@ import com.condoplus.condominio.event.ComunicadoPublicadoEvent;
 import com.condoplus.condominio.producer.CondominioEventProducer;
 import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import org.slf4j.MDC;
+import com.condoplus.condominio.estrutura.domain.Pessoa;
 import com.condoplus.condominio.exception.PessoaNaoEncontradaException;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -64,15 +65,14 @@ public class ComunicadoService {
     public ComunicadoResponse publicar(NovoComunicadoRequest req, UUID autorId) {
         log.info("Publicando comunicado: titulo={}, autorId={}", req.titulo(), autorId);
 
-        if (!pessoaRepository.existsById(autorId)) {
-            throw new PessoaNaoEncontradaException(autorId);
-        }
+        Pessoa autor = pessoaRepository.findByCredencialId(autorId)
+                .orElseThrow(() -> new PessoaNaoEncontradaException(autorId));
 
         Comunicado comunicado = new Comunicado();
         comunicado.setTitulo(req.titulo());
         comunicado.setMensagem(req.conteudo());
         comunicado.setPublicoAlvo(req.visibilidade());
-        comunicado.setAutorId(AggregateReference.to(autorId));
+        comunicado.setAutorId(AggregateReference.to(autor.getId()));
         comunicado.setDataPublicacao(LocalDateTime.now());
 
         if (req.visibilidade() == PublicoAlvo.BLOCO_ESPECIFICO) {
@@ -115,9 +115,8 @@ public class ComunicadoService {
     public ComunicadoResponse publicarParaBloco(NovoComunicadoRequest req, UUID autorId, String bloco) {
         log.info("Publicando comunicado para bloco: titulo={}, bloco={}, autorId={}", req.titulo(), bloco, autorId);
 
-        if (!pessoaRepository.existsById(autorId)) {
-            throw new PessoaNaoEncontradaException(autorId);
-        }
+        Pessoa autor = pessoaRepository.findByCredencialId(autorId)
+                .orElseThrow(() -> new PessoaNaoEncontradaException(autorId));
 
         if (bloco == null || bloco.isBlank()) {
             throw new IllegalArgumentException("O bloco destino deve ser fornecido quando visibilidade é BLOCO_ESPECIFICO.");
@@ -128,7 +127,7 @@ public class ComunicadoService {
         comunicado.setMensagem(req.conteudo());
         comunicado.setPublicoAlvo(PublicoAlvo.BLOCO_ESPECIFICO);
         comunicado.setBlocoAlvo(bloco.toUpperCase().trim());
-        comunicado.setAutorId(AggregateReference.to(autorId));
+        comunicado.setAutorId(AggregateReference.to(autor.getId()));
         comunicado.setDataPublicacao(LocalDateTime.now());
 
         Comunicado salvo = comunicadoRepository.save(comunicado);
