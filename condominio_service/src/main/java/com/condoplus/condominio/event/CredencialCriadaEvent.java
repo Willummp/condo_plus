@@ -1,11 +1,13 @@
 package com.condoplus.condominio.event;
 
-import java.util.Set;
 import java.util.UUID;
 
 public record CredencialCriadaEvent(
         UUID credencialId,
         String email,
-        Set<String> roles,
+        String documento,
+        String nomeCompleto,
+        String telefone,
+        String role,
         String correlationId
 ) {}

@@ -1,7 +1,8 @@
 package com.condoplus.condominio.consumer;
 
-import com.condoplus.condominio.event.CredencialCriadaEvent;
+import com.condoplus.condominio.estrutura.domain.Pessoa;
 import com.condoplus.condominio.estrutura.repository.PessoaRepository;
+import com.condoplus.condominio.event.CredencialCriadaEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -25,13 +26,35 @@ public class CredencialCriadaConsumer {
                     event.credencialId(), event.email());
 
             if (event.credencialId() != null && pessoaRepository.existsByCredencialId(event.credencialId())) {
-                log.info("Credencial {} já vinculada a uma pessoa no condomínio. Ignorando [tp2].",
+                log.info("Credencial {} já vinculada a uma Pessoa — ignorando (idempotência) [tp2].",
                         event.credencialId());
                 return;
             }
 
-            log.warn("Credencial {} criada no IAM sem pessoa correspondente no condomínio [tp2]. " +
-                    "O cadastro da pessoa deve ser realizado via POST /pessoas.", event.credencialId());
+            if (event.documento() == null || event.nomeCompleto() == null) {
+                log.warn("Credencial {} criada no IAM sem dados de pessoa no evento [tp2]. " +
+                        "Cadastro deve ser feito via POST /pessoas.", event.credencialId());
+                return;
+            }
+
+            if (pessoaRepository.existsByDocumento(event.documento())) {
+                log.info("Pessoa com documento {} já existe — vinculando credencial [tp2].", event.documento());
+                Pessoa existente = pessoaRepository.findByDocumento(event.documento()).orElseThrow();
+                existente.setCredencialId(event.credencialId());
+                pessoaRepository.save(existente);
+                return;
+            }
+
+            Pessoa pessoa = Pessoa.criar(
+                    event.credencialId(),
+                    event.nomeCompleto(),
+                    event.documento(),
+                    event.telefone(),
+                    event.email()
+            );
+            pessoaRepository.save(pessoa);
+            log.info("Pessoa criada a partir do evento CredencialCriada [tp2]. credencialId={} documento={}",
+                    event.credencialId(), event.documento());
         } finally {
             MDC.clear();
         }
