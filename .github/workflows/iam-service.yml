@@ -28,4 +28,4 @@ jobs:
           cache: 'maven'
 
       - name: Run Tests (iam_service)
-        run: mvn test -pl iam_service -Dsurefire.useFile=false
+        run: mvn verify -pl iam_service

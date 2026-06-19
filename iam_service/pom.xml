@@ -138,10 +138,29 @@
                         <eureka.client.register-with-eureka>false</eureka.client.register-with-eureka>
                         <eureka.client.fetch-registry>false</eureka.client.fetch-registry>
                         <spring.cloud.discovery.enabled>false</spring.cloud.discovery.enabled>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <systemPropertyVariables>
+                        <eureka.client.enabled>false</eureka.client.enabled>
+                        <eureka.client.register-with-eureka>false</eureka.client.register-with-eureka>
+                        <eureka.client.fetch-registry>false</eureka.client.fetch-registry>
+                        <spring.cloud.discovery.enabled>false</spring.cloud.discovery.enabled>
                         <spring.flyway.default-schema>public</spring.flyway.default-schema>
                         <spring.jpa.properties.default_schema>public</spring.jpa.properties.default_schema>
                         <spring.jpa.properties.hibernate.default_schema>public</spring.jpa.properties.hibernate.default_schema>
-                        <DOCKER_API_VERSION>1.44</DOCKER_API_VERSION>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
