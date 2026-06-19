@@ -16,7 +16,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -66,12 +65,6 @@ public class VisitanteService {
                 .stream()
                 .map(VisitanteResponseDTO::fromEntity)
                 .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<Visitante> buscarAtivosPorDocumento(String documento) {
-        return visitanteRepository.findAtivosPorDocumento(
-                documento, StatusVisitante.AUTORIZADO, LocalDateTime.now());
     }
 
     @Transactional

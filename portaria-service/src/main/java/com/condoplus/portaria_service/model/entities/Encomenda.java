@@ -73,14 +73,6 @@ public class Encomenda {
             throw new IllegalArgumentException("Porteiro recebedor obrigatório");
     }
 
-    public boolean estaExpirada(LocalDateTime agora) {
-        return switch (tipo) {
-            case CURTO_PRAZO -> agora.isAfter(dataChegada.plusHours(2));
-            case MEDIO_PRAZO -> agora.isAfter(dataChegada.plusDays(7));
-            case LONGO_PRAZO -> agora.isAfter(dataChegada.plusDays(30));
-        };
-    }
-
     public void marcarComoRetirada(UUID pessoaId, UUID porteiroId) {
         if (status == StatusEncomenda.RETIRADA)
             throw new IllegalStateException("Encomenda já retirada");
@@ -94,10 +86,4 @@ public class Encomenda {
         this.dataRetirada = LocalDateTime.now();
     }
 
-    public void marcarComoExpirada() {
-        if (status == StatusEncomenda.RETIRADA)
-            throw new IllegalStateException("Não pode expirar encomenda já retirada");
-
-        this.status = StatusEncomenda.EXPIRADA;
-    }
 }
