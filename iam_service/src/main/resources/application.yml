@@ -15,8 +15,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/condoplus?currentSchema=iam
-    username: postgres
-    password: condoplus123
+    username: ${IAM_DB_USER:condominio_user}
+    password: ${IAM_DB_PASSWORD:condominio_password}
     driver-class-name: org.postgresql.Driver
 
   jpa:
