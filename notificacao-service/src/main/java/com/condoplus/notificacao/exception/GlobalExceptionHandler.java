@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.server.ResponseStatusException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +43,13 @@ public class GlobalExceptionHandler {
         p.setType(URI.create("https://condoplus.local"));
         p.setProperty("erros", erros);
         return ResponseEntity.badRequest().body(p);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ProblemDetail> lidarResponseStatus(ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        String detail = ex.getReason() != null ? ex.getReason() : ex.getMessage();
+        return problem(status, detail, "Requisição inválida", "/errors/requisicao-invalida");
     }
 
     @ExceptionHandler(Exception.class)
