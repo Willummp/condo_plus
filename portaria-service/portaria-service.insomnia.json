@@ -1,0 +1,430 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2024-01-01T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app",
+  "resources": [
+
+    {
+      "_id": "wrk_portaria",
+      "_type": "workspace",
+      "name": "Condo+ — portaria-service",
+      "description": "Testes integrados do portaria-service (TP1)",
+      "scope": "collection"
+    },
+
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_portaria",
+      "name": "Base Environment",
+      "data": {
+        "base_url":      "http://localhost:8083",
+        "porteiro_id":   "00000000-0000-0000-0000-000000000001",
+        "sindico_id":    "00000000-0000-0000-0000-000000000002",
+        "morador_id":    "00000000-0000-0000-0000-000000000003",
+        "unidade_id":    "00000000-0000-0000-0000-000000000010",
+        "visitante_id":  "",
+        "encomenda_id":  ""
+      }
+    },
+
+    {
+      "_id": "env_docker",
+      "_type": "environment",
+      "parentId": "wrk_portaria",
+      "name": "Docker",
+      "data": {
+        "base_url": "http://localhost:8083"
+      }
+    },
+
+    {
+      "_id": "env_gateway",
+      "_type": "environment",
+      "parentId": "wrk_portaria",
+      "name": "Via Gateway",
+      "data": {
+        "base_url": "http://localhost:8080/api/portaria"
+      }
+    },
+
+    {
+      "_id": "fld_visitante",
+      "_type": "request_group",
+      "parentId": "wrk_portaria",
+      "name": "01 — Visitante",
+      "description": "Fluxo A: cadastro e entrada de visitante"
+    },
+
+    {
+      "_id": "fld_encomenda",
+      "_type": "request_group",
+      "parentId": "wrk_portaria",
+      "name": "02 — Encomenda",
+      "description": "Fluxo B: recebimento, listagem e retirada"
+    },
+
+    {
+      "_id": "fld_acesso",
+      "_type": "request_group",
+      "parentId": "wrk_portaria",
+      "name": "03 — Registro de Acesso",
+      "description": "Fluxo C: entrada de morador, visitante e saída"
+    },
+
+    {
+      "_id": "fld_negativos",
+      "_type": "request_group",
+      "parentId": "wrk_portaria",
+      "name": "04 — Negativos",
+      "description": "Cenários de erro esperados (403, 404, 422, 409)"
+    },
+
+    {
+      "_id": "req_visitante_social",
+      "_type": "request",
+      "parentId": "fld_visitante",
+      "name": "POST Autorizar visitante SOCIAL",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/visitantes",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ morador_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_MORADOR" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Ana Convidada\",\n  \"documento\": \"11122233344\",\n  \"telefone\": \"21999990001\",\n  \"tipo\": \"SOCIAL\",\n  \"unidadeId\": \"{{ unidade_id }}\",\n  \"validadeInicio\": \"2025-12-01T09:00:00\",\n  \"validadeFim\": \"2025-12-01T22:00:00\"\n}"
+      }
+    },
+
+    {
+      "_id": "req_visitante_prestador_sindico",
+      "_type": "request",
+      "parentId": "fld_visitante",
+      "name": "POST Autorizar visitante PRESTADOR (SÍNDICO) — 201",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/visitantes",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ sindico_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_SINDICO" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Carlos Encanador\",\n  \"documento\": \"99988877766\",\n  \"telefone\": \"21988880002\",\n  \"tipo\": \"PRESTADOR\",\n  \"unidadeId\": \"{{ unidade_id }}\",\n  \"validadeInicio\": \"2025-12-02T08:00:00\",\n  \"validadeFim\": \"2025-12-02T18:00:00\"\n}"
+      }
+    },
+
+    {
+      "_id": "req_visitante_listar",
+      "_type": "request",
+      "parentId": "fld_visitante",
+      "name": "GET Listar visitantes por unidade",
+      "method": "GET",
+      "url": "{{ base_url }}/portaria/visitantes?unidadeId={{ unidade_id }}",
+      "headers": [
+        { "name": "X-User-Id",    "value": "{{ morador_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_MORADOR" }
+      ]
+    },
+
+    {
+      "_id": "req_visitante_encerrar",
+      "_type": "request",
+      "parentId": "fld_visitante",
+      "name": "PATCH Encerrar visitante",
+      "method": "PATCH",
+      "url": "{{ base_url }}/portaria/visitantes/{{ visitante_id }}/encerrar",
+      "headers": [
+        { "name": "X-User-Id",    "value": "{{ sindico_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_SINDICO" }
+      ]
+    },
+
+    {
+      "_id": "req_encomenda_curto",
+      "_type": "request",
+      "parentId": "fld_encomenda",
+      "name": "POST Registrar encomenda CURTO_PRAZO (iFood)",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/encomendas",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ porteiro_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_PORTEIRO" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"unidadeId\": \"{{ unidade_id }}\",\n  \"tipo\": \"CURTO_PRAZO\",\n  \"descricao\": \"Pizza iFood - 2 caixas\",\n  \"codigoRastreio\": null\n}"
+      }
+    },
+
+    {
+      "_id": "req_encomenda_medio",
+      "_type": "request",
+      "parentId": "fld_encomenda",
+      "name": "POST Registrar encomenda MEDIO_PRAZO (Amazon)",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/encomendas",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ porteiro_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_PORTEIRO" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"unidadeId\": \"{{ unidade_id }}\",\n  \"tipo\": \"MEDIO_PRAZO\",\n  \"descricao\": \"Caixa Amazon\",\n  \"codigoRastreio\": \"BR123456789BR\"\n}"
+      }
+    },
+
+    {
+      "_id": "req_encomenda_longo",
+      "_type": "request",
+      "parentId": "fld_encomenda",
+      "name": "POST Registrar encomenda LONGO_PRAZO (Shopee)",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/encomendas",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ porteiro_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_PORTEIRO" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"unidadeId\": \"{{ unidade_id }}\",\n  \"tipo\": \"LONGO_PRAZO\",\n  \"descricao\": \"Importação Shopee\",\n  \"codigoRastreio\": \"SG987654321BR\"\n}"
+      }
+    },
+
+    {
+      "_id": "req_encomenda_listar",
+      "_type": "request",
+      "parentId": "fld_encomenda",
+      "name": "GET Listar encomendas pendentes da unidade",
+      "method": "GET",
+      "url": "{{ base_url }}/portaria/encomendas?unidadeId={{ unidade_id }}",
+      "headers": [
+        { "name": "X-User-Id",    "value": "{{ morador_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_MORADOR" }
+      ]
+    },
+
+    {
+      "_id": "req_encomenda_buscar",
+      "_type": "request",
+      "parentId": "fld_encomenda",
+      "name": "GET Buscar encomenda por ID",
+      "method": "GET",
+      "url": "{{ base_url }}/portaria/encomendas/{{ encomenda_id }}",
+      "headers": [
+        { "name": "X-User-Id",    "value": "{{ morador_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_MORADOR" }
+      ]
+    },
+
+    {
+      "_id": "req_encomenda_retirar",
+      "_type": "request",
+      "parentId": "fld_encomenda",
+      "name": "POST Retirar encomenda",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/encomendas/{{ encomenda_id }}/retirada",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ porteiro_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_PORTEIRO" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"retiradoPorPessoaId\": \"{{ morador_id }}\"\n}"
+      }
+    },
+
+    {
+      "_id": "req_acesso_entrada_morador",
+      "_type": "request",
+      "parentId": "fld_acesso",
+      "name": "POST Entrada de morador (sem veículo)",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/acessos/entrada/morador",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ porteiro_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_PORTEIRO" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"moradorId\": \"{{ morador_id }}\",\n  \"unidadeId\": \"{{ unidade_id }}\",\n  \"veiculoPlaca\": null,\n  \"observacoes\": null\n}"
+      }
+    },
+
+    {
+      "_id": "req_acesso_entrada_morador_veiculo",
+      "_type": "request",
+      "parentId": "fld_acesso",
+      "name": "POST Entrada de morador (com veículo)",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/acessos/entrada/morador",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ porteiro_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_PORTEIRO" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"moradorId\": \"{{ morador_id }}\",\n  \"unidadeId\": \"{{ unidade_id }}\",\n  \"veiculoPlaca\": \"ABC1D23\",\n  \"observacoes\": \"Entrada noturna\"\n}"
+      }
+    },
+
+    {
+      "_id": "req_acesso_entrada_visitante",
+      "_type": "request",
+      "parentId": "fld_acesso",
+      "name": "POST Entrada de visitante",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/acessos/entrada/visitante",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ porteiro_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_PORTEIRO" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"visitanteId\": \"{{ visitante_id }}\",\n  \"observacoes\": null\n}"
+      }
+    },
+
+    {
+      "_id": "req_acesso_saida",
+      "_type": "request",
+      "parentId": "fld_acesso",
+      "name": "POST Saída",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/acessos/saida",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ porteiro_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_PORTEIRO" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipoPessoa\": \"MORADOR\",\n  \"pessoaId\": \"{{ morador_id }}\",\n  \"unidadeId\": \"{{ unidade_id }}\",\n  \"veiculoPlaca\": null,\n  \"observacoes\": null\n}"
+      }
+    },
+
+    {
+      "_id": "req_neg_prestador_morador",
+      "_type": "request",
+      "parentId": "fld_negativos",
+      "name": "POST PRESTADOR por morador comum — 403 esperado",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/visitantes",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ morador_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_MORADOR" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Técnico Não Autorizado\",\n  \"documento\": \"55566677788\",\n  \"telefone\": \"21977770003\",\n  \"tipo\": \"PRESTADOR\",\n  \"unidadeId\": \"{{ unidade_id }}\",\n  \"validadeInicio\": \"2025-12-03T08:00:00\",\n  \"validadeFim\": \"2025-12-03T18:00:00\"\n}"
+      }
+    },
+
+    {
+      "_id": "req_neg_sem_token",
+      "_type": "request",
+      "parentId": "fld_negativos",
+      "name": "GET sem autenticação — 401 esperado",
+      "method": "GET",
+      "url": "{{ base_url }}/portaria/encomendas?unidadeId={{ unidade_id }}",
+      "headers": []
+    },
+
+    {
+      "_id": "req_neg_encomenda_inexistente",
+      "_type": "request",
+      "parentId": "fld_negativos",
+      "name": "GET encomenda inexistente — 404 esperado",
+      "method": "GET",
+      "url": "{{ base_url }}/portaria/encomendas/00000000-0000-0000-0000-000000000099",
+      "headers": [
+        { "name": "X-User-Id",    "value": "{{ morador_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_MORADOR" }
+      ]
+    },
+
+    {
+      "_id": "req_neg_retirada_dupla",
+      "_type": "request",
+      "parentId": "fld_negativos",
+      "name": "POST Retirada dupla — 409 esperado",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/encomendas/{{ encomenda_id }}/retirada",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ porteiro_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_PORTEIRO" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"retiradoPorPessoaId\": \"{{ morador_id }}\"\n}"
+      }
+    },
+
+    {
+      "_id": "req_neg_placa_invalida",
+      "_type": "request",
+      "parentId": "fld_negativos",
+      "name": "POST Entrada morador com placa formato inválido — 400 esperado",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/acessos/entrada/morador",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ porteiro_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_PORTEIRO" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"moradorId\": \"{{ morador_id }}\",\n  \"unidadeId\": \"{{ unidade_id }}\",\n  \"veiculoPlaca\": \"PLACA-ERRADA\",\n  \"observacoes\": null\n}"
+      }
+    },
+
+    {
+      "_id": "req_neg_visitante_inexistente",
+      "_type": "request",
+      "parentId": "fld_negativos",
+      "name": "POST Entrada visitante inexistente — 404 esperado",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/acessos/entrada/visitante",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ porteiro_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_PORTEIRO" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"visitanteId\": \"00000000-0000-0000-0000-000000000099\",\n  \"observacoes\": null\n}"
+      }
+    },
+
+    {
+      "_id": "req_neg_porteiro_sem_role",
+      "_type": "request",
+      "parentId": "fld_negativos",
+      "name": "POST Encomenda sem ROLE_PORTEIRO — 403 esperado",
+      "method": "POST",
+      "url": "{{ base_url }}/portaria/encomendas",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "X-User-Id",    "value": "{{ morador_id }}" },
+        { "name": "X-User-Roles", "value": "ROLE_MORADOR" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"unidadeId\": \"{{ unidade_id }}\",\n  \"tipo\": \"CURTO_PRAZO\",\n  \"descricao\": \"Tentativa inválida\",\n  \"codigoRastreio\": null\n}"
+      }
+    }
+
+  ]
+}
