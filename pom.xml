@@ -25,6 +25,7 @@
 
     <modules>
         <module>condominio_service</module>
+        <module>auditoria_service</module>
     </modules>
 
     <properties>
