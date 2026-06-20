@@ -34,6 +34,7 @@ logs/
 *.tmp
 *.swp
 
+
 # ─── Docker ──────────────────────────────────────────────────
 # (docker-compose.override.yml pode conter segredos locais)
 docker-compose.override.yml
@@ -42,3 +43,6 @@ docker-compose.override.yml
 # Mantida local — não sobe pro repositório remoto
 condominio_service/docs/
 docs/
+
+# ─── Arquivo de testes HTTP ──────────────────────────────────
+requests.http
