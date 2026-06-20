@@ -28,11 +28,11 @@ spring:
           filters:
             - StripPrefix=2
 
-        # Rotas para o auditoria-service
-        - id: auditoria-service
-          uri: lb://auditoria-service
+        # Rotas para o portaria-service
+        - id: portaria-service
+          uri: lb://portaria-service
           predicates:
-            - Path=/api/auditoria/**
+            - Path=/api/portaria/**
           filters:
             - StripPrefix=1
             - name: JwtAuthenticationFilter
