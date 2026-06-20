@@ -1,0 +1,63 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: auditoria-service
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/condoplus_auditoria}
+      auto-index-creation: true
+
+    # ─── Kafka (TP2) ────────────────────────────────────────────────
+    kafka:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+      consumer:
+        # Convencao do grupo: <servico>-group. Garante que cada mensagem e
+        # processada uma vez pelo conjunto de instancias do auditoria-service.
+        group-id: auditoria-group
+        # earliest: ao subir pela primeira vez, le os topicos desde o inicio.
+        # Para um servico de AUDITORIA isso e desejavel — nao queremos perder
+        # eventos publicados antes de o auditoria estar de pe.
+        auto-offset-reset: earliest
+        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        # ErrorHandlingDeserializer envelopa o JsonDeserializer: uma mensagem
+        # malformada vira erro tratavel (vai pro DLT no C16) em vez de derrubar
+        # o consumer. Mesmo padrao do condominio-service.
+        value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+        properties:
+          spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+          # Pacotes confiaveis para desserializacao. "*" e permissivo de
+          # proposito por enquanto; sera restringido quando decidirmos onde
+          # ficam os contratos de evento (modulo compartilhado vs duplicado).
+          spring.json.trusted.packages: "*"
+
+      producer:
+        # O auditoria tambem PUBLICA: no C17 ele emite "bloqueio_sugerido"
+        # quando detecta anomalia critica de login.
+        key-serializer: org.apache.kafka.common.serialization.StringSerializer
+        value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+eureka:
+  client:
+    enabled: true
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.uuid}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSS} %-5level [corrId=%X{correlationId:-}] [%thread] %logger{36} - %msg%n"
+  level:
+    root: INFO
+    com.condoplus.auditoria: DEBUG
+    org.springframework.data.mongodb.core: DEBUG

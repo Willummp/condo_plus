@@ -39,7 +39,7 @@ logs/
 # (docker-compose.override.yml pode conter segredos locais)
 docker-compose.override.yml
 
-# ─── Documentação local (PDFs, DOCX) ─────────────────────────
+# ─── Documentação local (PDFs, DOCX, specs) ──────────────────
 # Mantida local — não sobe pro repositório remoto
 condominio_service/docs/
 docs/
