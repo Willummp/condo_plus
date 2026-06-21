@@ -1,0 +1,20 @@
+version: '3.8'
+
+name: notificacao-service
+
+services:
+  notificacao-postgres:
+    image: postgres:16-alpine
+    container_name: condoplus-notificacao-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: condoplus
+      POSTGRES_USER: notificacao_user
+      POSTGRES_PASSWORD: notificacao_password
+    volumes:
+      - notificacao_postgres_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  notificacao_postgres_data:
