@@ -6,6 +6,7 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -92,6 +93,11 @@ public class GlobalExceptionHandler {
         p.setType(URI.create("https://condoplus.local/errors/validacao"));
         p.setProperty("erros", erros);
         return ResponseEntity.badRequest().body(p);
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAcessoNegado(AuthorizationDeniedException ex) {
+        return problem(HttpStatus.FORBIDDEN, "Acesso negado", "Acesso negado", "/errors/acesso-negado");
     }
 
     @ExceptionHandler(Exception.class)
