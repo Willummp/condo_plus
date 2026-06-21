@@ -6,9 +6,11 @@ import com.condoplus.condominio.convivencia.dto.NovaReservaRequest;
 import com.condoplus.condominio.convivencia.dto.ReservaResponse;
 import com.condoplus.condominio.convivencia.repository.AreaComumRepository;
 import com.condoplus.condominio.convivencia.repository.ReservaRepository;
+import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import com.condoplus.condominio.exception.AreaComumIndisponivelException;
 import com.condoplus.condominio.exception.AreaComumNaoEncontradaException;
 import com.condoplus.condominio.exception.ConflitoReservaException;
+import com.condoplus.condominio.exception.PessoaNaoEncontradaException;
 import com.condoplus.condominio.event.ReservaConfirmadaEvent;
 import com.condoplus.condominio.producer.CondominioEventProducer;
 import org.slf4j.MDC;
@@ -47,15 +49,18 @@ public class ReservaService {
 
     private final ReservaRepository reservaRepository;
     private final AreaComumRepository areaComumRepository;
+    private final PessoaRepository pessoaRepository;
     private final CondominioEventProducer eventProducer;
     private final Counter reservasCounter;
 
     public ReservaService(ReservaRepository reservaRepository,
                           AreaComumRepository areaComumRepository,
+                          PessoaRepository pessoaRepository,
                           CondominioEventProducer eventProducer,
                           MeterRegistry meterRegistry) {
         this.reservaRepository = reservaRepository;
         this.areaComumRepository = areaComumRepository;
+        this.pessoaRepository = pessoaRepository;
         this.eventProducer = eventProducer;
         this.reservasCounter = Counter.builder("condoplus.reservas.confirmadas")
                 .description("Quantidade total de reservas confirmadas no condominio")
@@ -95,9 +100,13 @@ public class ReservaService {
             throw new ConflitoReservaException(area.getNome(), req.dataReserva());
         }
 
+        UUID pessoaId = pessoaRepository.findByCredencialId(moradorId)
+                .orElseThrow(() -> new PessoaNaoEncontradaException(moradorId))
+                .getId();
+
         Reserva r = new Reserva();
         r.setAreaComumId(AggregateReference.to(req.areaComumId()));
-        r.setMoradorId(AggregateReference.to(moradorId));
+        r.setMoradorId(AggregateReference.to(pessoaId));
         r.setDataReserva(req.dataReserva());
         r.setHoraInicio(req.horaInicio());
         r.setHoraFim(req.horaFim());
