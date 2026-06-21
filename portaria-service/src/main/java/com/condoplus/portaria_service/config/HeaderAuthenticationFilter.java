@@ -59,7 +59,7 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
         return Arrays.stream(rolesHeader.split(","))
                 .map(String::trim)
                 .filter(r -> !r.isBlank())
-                .map(r -> new SimpleGrantedAuthority(r.startsWith("ROLE_") ? r : "ROLE_" + r))
+                .map(SimpleGrantedAuthority::new)
                 .toList();
     }
 }
