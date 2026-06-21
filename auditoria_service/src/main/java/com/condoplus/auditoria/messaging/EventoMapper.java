@@ -7,6 +7,8 @@ import com.condoplus.auditoria.domain.PessoaIniciadora;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,13 +27,27 @@ public class EventoMapper {
         return RegistroAuditoria.builder()
                 .eventId(envelope.eventId())
                 .correlationId(envelope.correlationId())
-                .timestamp(envelope.timestamp() != null ? envelope.timestamp() : Instant.now())
+                .timestamp(parseTimestamp(envelope.timestamp()))
                 .tipoEvento(mapearTipo(envelope.eventType()))
                 .servicoOrigem(envelope.originService())
                 .entidadeAfetada(extrairEntidade(envelope))
                 .pessoaIniciadora(extrairIniciador(envelope))
                 .payload(envelope.payload())
                 .build();
+    }
+
+    private Instant parseTimestamp(Object ts) {
+        if (ts == null) return Instant.now();
+        String s = ts.toString();
+        try {
+            return Instant.parse(s);
+        } catch (Exception e1) {
+            try {
+                return LocalDateTime.parse(s).toInstant(ZoneOffset.UTC);
+            } catch (Exception e2) {
+                return Instant.now();
+            }
+        }
     }
 
     /**
