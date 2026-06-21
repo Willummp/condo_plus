@@ -17,14 +17,7 @@ spring:
       group-id: auditoria-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
-        # Ignora o header __TypeId__ que os producers enviam: cada producer usa
-        # seu proprio EventEnvelope<T>. O auditoria sempre desserializa como
-        # seu proprio EventEnvelope (estrutura compativel via @JsonIgnoreProperties).
-        spring.json.use.type.headers: false
-        spring.json.value.default.type: com.condoplus.auditoria.messaging.EventEnvelope
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
