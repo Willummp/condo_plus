@@ -73,9 +73,9 @@ public class MultaService {
             throw new UnidadeNaoEncontradaException(req.unidadeId());
         }
 
-        if (!pessoaRepository.existsById(aplicadorId)) {
-            throw new PessoaNaoEncontradaException(aplicadorId);
-        }
+        UUID pessoaId = pessoaRepository.findByCredencialId(aplicadorId)
+                .orElseThrow(() -> new PessoaNaoEncontradaException(aplicadorId))
+                .getId();
 
         Multa multa = new Multa();
         multa.setUnidadeId(AggregateReference.to(req.unidadeId()));
@@ -86,7 +86,7 @@ public class MultaService {
         multa.setDataAplicacao(LocalDateTime.now());
         multa.setDataVencimento(req.dataVencimento());
         multa.setStatus(StatusMulta.PENDENTE);
-        multa.setAplicadaPorId(AggregateReference.to(aplicadorId));
+        multa.setAplicadaPorId(AggregateReference.to(pessoaId));
 
         Multa salva = multaRepository.save(multa);
         this.multasCounter.increment();
