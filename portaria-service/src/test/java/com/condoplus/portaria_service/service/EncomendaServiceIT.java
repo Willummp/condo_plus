@@ -3,6 +3,7 @@ package com.condoplus.portaria_service.service;
 import com.condoplus.portaria_service.dto.response.EncomendaResponseDTO;
 import com.condoplus.portaria_service.dto.request.NovaEncomendaRequest;
 import com.condoplus.portaria_service.dto.request.RetiradaRequest;
+import com.condoplus.portaria_service.messaging.EventoPublicador;
 import com.condoplus.portaria_service.model.enums.StatusEncomenda;
 import com.condoplus.portaria_service.model.enums.TipoEncomenda;
 import com.condoplus.portaria_service.repository.EncomendaRepository;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -49,7 +51,14 @@ class EncomendaServiceIT {
 
         // TTL reduzido para 1 minuto — evita esperar 2h no teste de expiração
         registry.add("condoplus.portaria.encomendas.curto-prazo-ttl-minutos", () -> "1");
+
+        // Kafka não está disponível em CI — consumer não deve tentar conectar
+        registry.add("spring.kafka.bootstrap-servers", () -> "localhost:9999");
+        registry.add("spring.kafka.listener.auto-startup", () -> "false");
     }
+
+    // Kafka não faz parte do escopo deste teste (PostgreSQL + Redis)
+    @MockBean private EventoPublicador eventoPublicador;
 
     @Autowired private EncomendaService encomendaService;
     @Autowired private EncomendaRedisStore redisStore;
