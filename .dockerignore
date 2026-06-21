@@ -1,0 +1,7 @@
+**/target/
+**/.git/
+**/.idea/
+**/*.pdf
+**/*.html
+**/.mvn/wrapper/
+**/node_modules/
