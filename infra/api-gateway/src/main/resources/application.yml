@@ -20,13 +20,22 @@ spring:
             - StripPrefix=1
             - name: JwtAuthenticationFilter
 
-        # Rotas para o iam-service
-        - id: iam-service
+        # Rota publica IAM: login e refresh nao requerem JWT
+        - id: iam-service-auth
+          uri: lb://iam-service
+          predicates:
+            - Path=/api/iam/auth/**
+          filters:
+            - StripPrefix=2
+
+        # Rota protegida IAM: credenciais e demais endpoints requerem JWT
+        - id: iam-service-protected
           uri: lb://iam-service
           predicates:
             - Path=/api/iam/**
           filters:
             - StripPrefix=2
+            - name: JwtAuthenticationFilter
 
         # Rotas para o auditoria-service
         - id: auditoria-service
