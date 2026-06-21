@@ -22,6 +22,7 @@
     <name>condo-plus</name>
     <description>Projeto de Microsserviços Condo+ (Monorepo)</description>
     <modules>
+        <module>portaria-service</module>
         <module>condominio_service</module>
         <module>auditoria_service</module>
         <module>iam_service</module>

@@ -37,6 +37,15 @@ spring:
             - StripPrefix=1
             - name: JwtAuthenticationFilter
 
+        # Rotas para o portaria-service
+        - id: portaria-service
+          uri: lb://portaria-service
+          predicates:
+            - Path=/api/portaria/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthenticationFilter
+
 eureka:
   client:
     serviceUrl:
