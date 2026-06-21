@@ -46,6 +46,15 @@ spring:
             - StripPrefix=1
             - name: JwtAuthenticationFilter
 
+        # Rotas para o notificacao-service
+        - id: notificacao-service
+          uri: lb://notificacao-service
+          predicates:
+            - Path=/api/notificacao/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthenticationFilter
+
 eureka:
   client:
     serviceUrl:
