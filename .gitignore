@@ -46,3 +46,9 @@ docs/
 
 # ─── Arquivo de testes HTTP ──────────────────────────────────
 requests.http
+
+# ─── Arquivos gerados localmente ─────────────────────────────
+*.html
+*.pdf
+*.ps1
+condoplus.postman_collection.json
