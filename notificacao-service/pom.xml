@@ -13,7 +13,6 @@
 
     <groupId>com.condoplus</groupId>
     <artifactId>notificacao-service</artifactId>
-    <version>1.0.0</version>
     <name>notificacao-service</name>
     <description>Serviço de Notificações do Condo+ (reativo)</description>
 
