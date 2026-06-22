@@ -29,6 +29,8 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_R2DBC_URL=r2dbc:postgresql://notificacao-postgres:5432/condoplus?currentSchema=notificacao
       - SPRING_FLYWAY_URL=jdbc:postgresql://notificacao-postgres:5432/condoplus?currentSchema=notificacao
+      - NOTIFICACAO_DB_USER=condominio_user
+      - NOTIFICACAO_DB_PASSWORD=condominio_password
       - KAFKA_BOOTSTRAP=condoplus-kafka:9092
       - EUREKA_URL=http://condoplus-eureka:8761/eureka
 
