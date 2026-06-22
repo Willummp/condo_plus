@@ -27,6 +27,8 @@
         <module>portaria-service</module>
         <module>condominio_service</module>
         <module>iam_service</module>
+        <module>notificacao-service</module>
+        <module>auditoria_service</module>
         <module>infra/eureka-server</module>
         <module>infra/api-gateway</module>
     </modules>
