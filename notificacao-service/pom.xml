@@ -13,7 +13,6 @@
 
     <groupId>com.condoplus</groupId>
     <artifactId>notificacao-service</artifactId>
-    <version>1.0.0</version>
     <name>notificacao-service</name>
     <description>Serviço de Notificações do Condo+ (reativo)</description>
 
@@ -128,6 +127,16 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot3</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-reactor</artifactId>
         </dependency>
 
     </dependencies>

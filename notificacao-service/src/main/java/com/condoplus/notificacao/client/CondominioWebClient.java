@@ -20,7 +20,7 @@ public class CondominioWebClient {
     public Flux<UUID> listarPessoasDaUnidade(UUID unidadId) {
         log.info("Chamando CONDOMINIO-SERVICE via WebClient para unidadeId={}", unidadId);
         return webClient.get()
-                .uri("http://condominio-service/api/unidades/{id}/pessoas", unidadId)
+                .uri("lb://condominio-service/api/unidades/{id}/pessoas", unidadId)
                 .retrieve()
                 .bodyToFlux(UUID.class);
     }
@@ -28,7 +28,7 @@ public class CondominioWebClient {
     public Flux<UUID> listarTodosMoradoresAtivos() {
         log.info("Chamando CONDOMINIO-SERVICE via WebClient para listar todos moradores ativos");
         return webClient.get()
-                .uri("http://condominio-service/api/moradores/ativos")
+                .uri("lb://condominio-service/api/moradores/ativos")
                 .retrieve()
                 .bodyToFlux(UUID.class);
     }

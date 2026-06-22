@@ -14,5 +14,5 @@ RUN mvn package -pl notificacao-service -am -DskipTests -q --no-transfer-progres
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /build/notificacao-service/target/notificacao-service-1.0.0.jar app.jar
+COPY --from=build /build/notificacao-service/target/notificacao-service-1.0.0-SNAPSHOT.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]

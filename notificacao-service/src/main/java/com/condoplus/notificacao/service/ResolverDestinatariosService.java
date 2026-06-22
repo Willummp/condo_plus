@@ -34,7 +34,12 @@ public class ResolverDestinatariosService {
         }
 
         if (evento.tipoEvento() == TipoEvento.COMUNICADO_PUBLICADO) {
-            return condominioClient.listarTodosMoradoresAtivos();
+            return condominioClient.listarTodosMoradoresAtivos()
+                    .onErrorResume(ex -> {
+                        log.warn("Falha ao resolver destinatários para COMUNICADO_PUBLICADO. erro={}",
+                                ex.getMessage());
+                        return Flux.empty();
+                    });
         }
 
         log.warn("Evento sem destinatário identificável: {}", evento.eventoOrigemId());
