@@ -52,7 +52,7 @@ spring:
           predicates:
             - Path=/api/notificacao/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=1
             - name: JwtAuthenticationFilter
 
 eureka:
