@@ -5,13 +5,6 @@ spring:
   application:
     name: notificacao-service
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8080/realms/condoplus}
-          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8080/realms/condoplus/protocol/openid-connect/certs}
-
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/condoplus?currentSchema=notificacao
     username: ${NOTIFICACAO_DB_USER:notificacao_user}
