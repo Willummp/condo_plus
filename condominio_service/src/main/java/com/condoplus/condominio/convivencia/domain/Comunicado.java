@@ -12,17 +12,6 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Entidade que representa um Comunicado publicado pela administração ou síndico no condomínio.
- * 
- * <p>Anotações da classe:
- * <ul>
- *   <li>{@code @Table(schema = "condominio", value = "comunicado")} — Mapeia a classe para a tabela {@code comunicado} do schema {@code condominio}.</li>
- *   <li>{@code @Getter} — Gera os métodos getters pelo Lombok.</li>
- *   <li>{@code @Setter} — Gera os métodos setters pelo Lombok.</li>
- *   <li>{@code @NoArgsConstructor} — Gera o construtor padrão vazio pelo Lombok.</li>
- * </ul>
- */
 @Table(schema = "condominio", value = "comunicado")
 @Getter
 @Setter
@@ -47,10 +36,7 @@ public class Comunicado {
     @Column("publico_alvo")
     private PublicoAlvo publicoAlvo;
 
-    /**
-     * Bloco residencial de destino. 
-     * Obrigatório apenas quando {@code publicoAlvo} é classificado como {@code PublicoAlvo.BLOCO_ESPECIFICO}.
-     */
+    
     @Column("bloco_alvo")
     private String blocoAlvo;
 }

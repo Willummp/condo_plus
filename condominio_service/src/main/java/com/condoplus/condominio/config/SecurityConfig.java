@@ -23,20 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Configuração de segurança do condominio-service.
- *
- * <p>Este serviço NÃO valida JWT diretamente.
- * O API Gateway já fez a validação e propagou a identidade como headers:
- * <ul>
- *   <li>{@code X-User-Id} — UUID da credencial do usuário</li>
- *   <li>{@code X-User-Email} — e-mail do usuário</li>
- *   <li>{@code X-User-Roles} — roles separadas por vírgula (ex: "SINDICO,MORADOR")</li>
- * </ul>
- *
- * <p>O filtro {@code HeaderAuthenticationFilter} lê esses headers e monta
- * o {@code SecurityContext}, permitindo que {@code @PreAuthorize} funcione.
- */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -74,8 +60,7 @@ public class SecurityConfig {
                         .stream(rolesHeader.split(","))
                         .map(String::trim)
                         .filter(r -> !r.isBlank())
-                        // Spring Security espera "ROLE_" prefix com hasRole(),
-                        // mas usamos hasAnyRole() que adiciona o prefix automaticamente
+
                         .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
                         .collect(Collectors.toList());
 

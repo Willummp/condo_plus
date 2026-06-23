@@ -43,16 +43,14 @@ class UnidadeRepositoryIT {
     @Test
     @DisplayName("Deve persistir e recuperar uma Unidade do banco de dados PostgreSQL real usando Testcontainers")
     void persistirERecuperarUnidade() {
-        // Arrange
+
         Unidade unidade = Unidade.criar("304", "Bloco C", TipoUnidade.APARTAMENTO);
 
-        // Act
         Unidade salva = unidadeRepository.save(unidade);
         assertNotNull(salva.getId());
 
         Optional<Unidade> encontrada = unidadeRepository.findById(salva.getId());
 
-        // Assert
         assertTrue(encontrada.isPresent());
         assertEquals("304", encontrada.get().getNumero());
         assertEquals("Bloco C", encontrada.get().getBloco());
@@ -63,11 +61,10 @@ class UnidadeRepositoryIT {
     @Test
     @DisplayName("Deve retornar true se a unidade existe por número e bloco")
     void existsByNumeroAndBloco() {
-        // Arrange
+
         Unidade unidade = Unidade.criar("102", "Bloco B", TipoUnidade.APARTAMENTO);
         unidadeRepository.save(unidade);
 
-        // Act & Assert
         assertTrue(unidadeRepository.existsByNumeroAndBloco("102", "Bloco B"));
         assertFalse(unidadeRepository.existsByNumeroAndBloco("102", "Bloco A"));
     }

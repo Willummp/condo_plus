@@ -29,12 +29,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-/**
- * Testes de integração do Kafka utilizando Testcontainers (tp2).
- * 
- * <p>Valida o fluxo assíncrono de mensageria: publicação de eventos de negócio e consumo
- * de eventos externos (como criação de credenciais pelo IAM), aplicando regras de idempotência.
- */
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("test")
@@ -128,10 +122,8 @@ public class CondominioKafkaIT {
                 "corr-abc"
         );
 
-        // Publica no tópico de credenciais criadas
         kafkaTemplate.send("credenciais.criadas", credencialId.toString(), event).get(5, SECONDS);
 
-        // Aguarda a persistência assíncrona
         boolean salva = false;
         for (int i = 0; i < 50; i++) {
             if (pessoaRepository.existsByDocumento(documento)) {
@@ -147,12 +139,10 @@ public class CondominioKafkaIT {
         assertThat(pessoa.getCredencialId()).isEqualTo(credencialId);
         assertThat(pessoa.getNomeCompleto()).isEqualTo("User Test");
 
-        // Testar Idempotência: enviar novamente o mesmo evento
         assertDoesNotThrow(() -> {
             kafkaTemplate.send("credenciais.criadas", credencialId.toString(), event).get(5, SECONDS);
         });
 
-        // Aguarda um tempo de propagação e garante que não duplicou
         Thread.sleep(500);
         long count = StreamSupport.stream(pessoaRepository.findAll().spliterator(), false)
                 .filter(p -> p.getDocumento().equals(documento))

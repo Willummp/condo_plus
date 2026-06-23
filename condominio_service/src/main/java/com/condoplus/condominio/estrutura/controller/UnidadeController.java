@@ -12,12 +12,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Controller REST responsável por expor os endpoints de gerenciamento de Unidades e suas Vinculações.
- * 
- * <p>Este controlador atua como a camada web do bounded context de Estrutura, delegando
- * toda a regra de negócio para a camada de serviço (UnidadeService).
- */
 @RestController
 @RequestMapping("/condominio/unidades")
 @RequiredArgsConstructor

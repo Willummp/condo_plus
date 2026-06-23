@@ -14,10 +14,6 @@ import org.springframework.data.relational.core.mapping.event.BeforeConvertCallb
 
 import java.util.UUID;
 
-/**
- * Configuração do Spring Data JDBC.
- *
- */
 @Configuration
 public class JdbcConfig {
 
@@ -27,7 +23,7 @@ public class JdbcConfig {
             if (aggregate.getId() == null) {
                 aggregate.setId(UUID.randomUUID());
             }
-            // Gera IDs para as vinculações internas do aggregate
+
             aggregate.getVinculacoes().forEach(v -> {
                 if (v.getId() == null) {
                     v.setId(UUID.randomUUID());
