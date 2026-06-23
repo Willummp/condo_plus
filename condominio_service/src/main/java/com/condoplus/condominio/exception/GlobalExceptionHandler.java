@@ -74,7 +74,7 @@ public class GlobalExceptionHandler {
         ProblemDetail p = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST, "Dados de entrada inválidos");
         p.setTitle("Validação falhou");
-        p.setType(URI.create("https:
+        p.setType(URI.create("https://condoplus.local/errors/validacao"));
         p.setProperty("erros", erros);
         return ResponseEntity.badRequest().body(p);
     }
@@ -95,7 +95,7 @@ public class GlobalExceptionHandler {
                                                   String title, String typePath) {
         ProblemDetail p = ProblemDetail.forStatusAndDetail(status, detail);
         p.setTitle(title);
-        p.setType(URI.create("https:
+        p.setType(URI.create("https://condoplus.local" + typePath));
         return ResponseEntity.status(status).body(p);
     }
 }
