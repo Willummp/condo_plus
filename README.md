@@ -1,379 +1,585 @@
-# 🏢 Condo+ — Sistema de Gestão de Condomínios Residenciais
+# Condo+ — Sistema de Gestão de Condomínios Residenciais
 
-### Divisão de Responsabilidades por Microsserviço:
-| Aluno | Microsserviço sob Responsabilidade | Papel / Responsabilidade Adicional |
+Sistema distribuído baseado em microsserviços para modernizar a gestão de condomínios residenciais. Resolve problemas como conflitos de reservas em áreas comuns, rastreabilidade de encomendas, controle de acesso físico, aplicação de multas e comunicação entre síndico e moradores.
+
+---
+
+## Equipe
+
+| Integrante | Microsserviço | Responsabilidade |
 |---|---|---|
-| **Lucas Ferreira** | `condominio-service` | Desenvolvimento do Core de Estrutura, Convivência e Testes de Integração |
-| **Caio** | `iam-service` | Gerenciamento de Credenciais de Acesso e Autenticação (Spring Security) |
-| **Integrante 3** | `portaria-service` | Controle de Acesso Físico, Visitantes e Recepção de Encomendas |
-| **Integrante 4** | `notificacao-service` | Envio de Alertas e Notificações (E-mail, SMS, Push) |
-| **Integrante 5** | `auditoria-service` | Histórico e Auditoria de Operações Críticas do Condomínio |
+| Lucas Ferreira | `condominio-service` | Core de estrutura, convivência e testes de integração |
+| Caio | `iam-service` | Autenticação, credenciais e autorização JWT |
+| Nicholas | `portaria-service` | Controle de acesso físico, visitantes e encomendas |
+| Rodolpho | `notificacao-service` | Notificações reativas e preferências de canal |
+| Fernando | `auditoria-service` | Histórico de operações e detecção de anomalias |
 
 ---
 
-## 📝 Descrição do Projeto
-O **Condo+** é um sistema distribuído para modernizar e simplificar a gestão de condomínios residenciais. O sistema resolve problemas como:
-* Falha de comunicação na portaria sobre quem tem acesso à unidade.
-* Conflitos de reservas em áreas comuns (churrasqueiras, salões de festas).
-* Rastreabilidade falha no recebimento e entrega de encomendas.
-* Distribuição ineficiente de multas estruturais e de convivência.
-
----
-
-## 🗺️ Arquitetura do Sistema
-A arquitetura do Condo+ é construída sobre microsserviços desacoplados e resilientes:
+## Arquitetura Geral
 
 ```
-                          [ Cliente ]
-                               │
-                               ▼ (Porta 8080)
-                       [ API Gateway ] ◄──── Confirma Rotas
-                               │
-       ┌───────────────┬───────┴───────┬───────────────┐
-       ▼               ▼               ▼               ▼
-[ condominio ]      [ iam ]       [ portaria ]  [ notificacao ]
- (Porta 8082)    (Porta 8081)     (Porta 8083)    (Porta 8084)
-       │               │               │               │
-       ▼               ▼               ▼               ▼
-  PostgreSQL      PostgreSQL      PostgreSQL      PostgreSQL
- (Schema condo)  (Schema xxx)    (Schema xxx)   (Schema xxx)
+                        [ Cliente ]
+                             │
+                             ▼  :8080
+                      [ API Gateway ]
+                      Valida JWT + injeta
+                      X-User-Id/Email/Roles
+                             │
+        ┌────────────────────┼────────────────────┐
+        ▼ :8081              ▼ :8082              ▼ :8083
+   [ iam-service ]  [ condominio-service ] [ portaria-service ]
+   Spring MVC       Spring MVC + JDBC       Spring MVC + JPA
+   JWT (jjwt)       Kafka producer          Kafka producer + Redis
+        │                    │                    │
+        └────────────────────┴────────────────────┤
+                             │
+                   ┌─────────┴──────────┐
+                   ▼ :8084              ▼ :8085
+          [ notificacao-service ] [ auditoria-service ]
+          WebFlux + R2DBC         Spring MVC + MongoDB
+          Kafka consumer          Kafka consumer
+
+Infraestrutura:
+  PostgreSQL :5432  |  MongoDB :27017  |  Kafka :9092  |  Redis :6379
+  Eureka :8761  (Service Discovery)
 ```
 
-### 📡 Discovery Server (Eureka Server)
-Utilizamos o **Spring Cloud Netflix Eureka** como nosso Service Registry na porta **8761**. Todos os microsserviços se registram dinamicamente ao iniciar, permitindo que a comunicação entre serviços ocorra pelo nome lógico (ex: `lb://iam-service`) em vez de IPs estáticos.
-
-### 🎛️ API Gateway (Spring Cloud Gateway)
-O API Gateway roda na porta **8080** como ponto único de entrada da aplicação, encaminhando as rotas externas para os nomes lógicos de serviço no Eureka:
-* `/api/condominio/**` ➔ `lb://condominio-service` (com `StripPrefix=1`)
-* `/api/iam/**` ➔ `lb://iam-service` (com `StripPrefix=1`)
-* `/api/portaria/**` ➔ `lb://portaria-service` (com `StripPrefix=1`)
-* `/api/notificacoes/**` ➔ `lb://notificacao-service` (com `StripPrefix=1`)
-* `/api/auditoria/**` ➔ `lb://auditoria-service` (com `StripPrefix=1`)
+Todos os serviços se registram no **Eureka** ao iniciar. A comunicação entre eles usa o nome lógico (ex: `lb://iam-service`) — sem IPs fixos. O **API Gateway** é o único ponto de entrada externo.
 
 ---
 
-## 💾 Persistência de Dados
-Cada microsserviço gerencia seus próprios dados de forma isolada através de databases ou schemas PostgreSQL separados (`condominio`, `iam`, `portaria`, `notificacao`, `auditoria`).
+## Tecnologias por Serviço
+
+### infra/api-gateway (porta 8080)
+
+| Tecnologia | Por que foi usada |
+|---|---|
+| Spring Cloud Gateway (WebFlux/Netty) | Roteamento reativo não-bloqueante; suporte nativo a filtros globais e por rota |
+| `JwtAuthenticationFilter` (customizado) | Valida assinatura HMAC-SHA256 e expiração do token **antes** de encaminhar para qualquer serviço; injeta `X-User-Id`, `X-User-Email` e `X-User-Roles` nos headers downstream |
+| `CorrelationGatewayFilter` | Gera ou propaga `X-Correlation-ID` em todas as requisições para rastreabilidade entre logs dos serviços |
+| Spring Cloud LoadBalancer | Balanceia chamadas para os nomes lógicos do Eureka (`lb://nome-servico`) |
+| StripPrefix | Remove prefixo da rota antes de encaminhar: `StripPrefix=1` para a maioria, `StripPrefix=2` para IAM e notificação (cujos controllers não têm o prefixo no path interno) |
+
+**Tabela de roteamento:**
+
+| Rota externa (Gateway) | Encaminha para | StripPrefix |
+|---|---|---|
+| `/api/condominio/**` | `lb://condominio-service` | 1 |
+| `/api/portaria/**` | `lb://portaria-service` | 1 |
+| `/api/auditoria/**` | `lb://auditoria-service` | 1 |
+| `/api/iam/**` | `lb://iam-service` | 2 |
+| `/api/notificacao/**` | `lb://notificacao-service` | 2 |
 
 ---
 
-## ⚡ Estratégia de Resiliência
-Para evitar falhas em cascata na chamada síncrona do `condominio-service` para o `iam-service` (cadastro de credenciais), configuramos o **Resilience4j**:
-* **Circuit Breaker:** Abre o circuito se mais de 50% das últimas 10 chamadas falharem ou estourarem o timeout, redirecionando o fluxo para um método de fallback amigável.
-* **Time Limiter:** Aplica um timeout de 3 segundos nas chamadas ao IAM, impedindo que requisições presas esgotem os recursos do servidor Tomcat local.
+### iam-service (porta 8081)
+
+| Tecnologia | Por que foi usada |
+|---|---|
+| Spring Security | Proteção das rotas de gerenciamento de credenciais (`ADMIN`/`SINDICO`) via `@PreAuthorize` |
+| jjwt (io.jsonwebtoken) | Geração e verificação de tokens JWT com HMAC-SHA256; separação clara entre `accessToken` (curta duração) e `refreshToken` |
+| Spring Data JPA + Hibernate | Mapeamento ORM das entidades `Credencial` e `RefreshToken` com relacionamento `@ManyToMany` para roles |
+| Flyway | Versionamento do schema do banco (`V1`, `V2__seed_admin.sql`) — seed do admin inicial aplicado automaticamente |
+| Spring Kafka | Publica eventos de criação/bloqueio de credencial para outros serviços |
+| Testcontainers (PostgreSQL) | Testes de integração sobem um PostgreSQL real em container Docker, garantindo que as queries e migrations funcionam de verdade |
 
 ---
 
-## ⚡ Arquitetura TP2 — Observabilidade, Mensageria e Reatividade
+### condominio-service (porta 8082)
 
-Na segunda entrega (TP2), a arquitetura foi evoluída para incorporar três pilares essenciais de sistemas distribuídos modernos:
-
-### 1. Observabilidade e Correlação (Correlation ID)
-* **Correlation ID Tracing:** O **API Gateway** intercepta todas as requisições via `CorrelationGatewayFilter` (filtro reativo WebFlux). Se o header `X-Correlation-ID` não existir, ele gera um UUID, injeta-o na requisição enviada ao microsserviço correspondente e também na resposta HTTP final.
-* **Logs Estruturados:** No `condominio-service`, o servlet `CorrelationFilter` captura o Correlation ID da requisição e o registra no **MDC (Mapped Diagnostic Context)** do SLF4J/Logback. O padrão de log do console (`[%X{correlationId}]`) é atualizado para exibir o ID de forma transparente em cada linha de log.
-* **Métricas Customizadas:** Configuração do **Spring Boot Actuator** exposto em `/actuator/prometheus`. Usamos o **Micrometer** para coletar métricas customizadas de negócio (counters):
-  * `condoplus.multas.aplicadas` — Incrementado ao aplicar multas.
-  * `condoplus.comunicados.publicados` — Incrementado ao publicar comunicados.
-  * `condoplus.reservas.confirmadas` — Incrementado ao confirmar reservas de áreas comuns.
-
-### 2. Mensageria Assíncrona com Apache Kafka
-* **Domínio Orientado a Eventos:** O `condominio-service` publica eventos de negócio de forma assíncrona para o broker:
-  * `comunicados.publicados` contendo o payload `ComunicadoPublicadoEvent`.
-  * `multas.aplicadas` contendo o payload `MultaAplicadaEvent`.
-  * `reservas.confirmadas` contendo o payload `ReservaConfirmadaEvent`.
-* **Envelope de Evento (`EventEnvelope`):** Todos os eventos publicados são encapsulados em um envelope padronizado que transporta metadados essenciais: `event_id`, `event_type`, `timestamp`, `correlation_id` (preservando o rastreamento do log), `origin_service` e o `payload` de negócio.
-* **Resiliência e DLQ (Dead Letter Queue):** O tratamento de falhas em consumidores de Kafka é feito via `DeadLetterPublishingRecoverer` (Spring Kafka) configurado no `KafkaConfig`. Mensagens que falham repetidamente após 3 tentativas com 2 segundos de intervalo são enviadas automaticamente para o tópico `.DLT` (ex: `credenciais.criadas.DLT`).
-* **Garantia de Idempotência:** O `CredencialCriadaConsumer` escuta o tópico `credenciais.criadas` e valida se a pessoa física já existe verificando previamente a existência do `documento` (CPF) ou do `credencial_id` no banco de dados, evitando duplicidades em caso de redelivery de mensagens.
-
-### 3. Programação Reativa com WebFlux
-* **WebClient Reativo:** O `IamClient` foi totalmente refatorado para utilizar o `WebClient` reativo do Spring WebFlux em substituição ao `RestClient` síncrono. O método `criarCredencial` retorna um `Mono<CredencialResponse>` manipulado pelo Project Reactor.
-* **Tolerância a Falhas com Reactor:** O uso de `@CircuitBreaker` e `@TimeLimiter` do Resilience4j está integrado de forma nativa ao fluxo reativo do Project Reactor, acionando o método de `fallback` caso a chamada ao IAM exceda o tempo limite de 3 segundos ou o serviço esteja indisponível.
+| Tecnologia | Por que foi usada |
+|---|---|
+| Spring Data JDBC | DDD com `Unidade` como Aggregate Root — Spring Data JDBC respeita os limites de agregado (sem lazy loading acidental), evitando consultas N+1 e mantendo a consistência do domínio |
+| Spring Security (header-based) | Consome `X-User-Id`/`X-User-Roles` injetados pelo Gateway para montar o `SecurityContext`; sem redeclarar JWTs — sem dupla validação |
+| Resilience4j (Circuit Breaker + TimeLimiter) | Chamada síncrona ao `iam-service` para criar credenciais; abre o circuito se > 50% das últimas 10 chamadas falharem ou estourarem 3 s de timeout; evita cascata de falhas |
+| Spring Kafka | Publica eventos de domínio (`MULTA_APLICADA`, `COMUNICADO_PUBLICADO`, `RESERVA_CONFIRMADA`, `ENCOMENDA_RECEBIDA`) consumidos por `notificacao-service` e `auditoria-service` |
+| Flyway | Migrations versionadas com schema isolado `condominio` |
+| Micrometer + Prometheus | Métricas customizadas de negócio: `condoplus.multas.aplicadas`, `condoplus.comunicados.publicados`, `condoplus.reservas.confirmadas` |
 
 ---
 
-## 🛠️ Como Executar o Projeto
+### portaria-service (porta 8083)
 
-### Pré-requisitos:
-* Java 21 JDK instalado.
-* Maven 3.9+ instalado.
-* Docker rodando localmente (para subir o banco de dados e os testes do Testcontainers).
-
-### Ordem de Execução:
-
-1. **Subir o Banco de Dados (PostgreSQL):**
-   ```bash
-   # Na raiz do projeto
-   docker compose -f condominio_service/compose/docker-compose.yml up -d postgres
-   ```
-
-2. **Subir o Discovery Server (Eureka):**
-   ```bash
-   cd infra/eureka-server
-   mvn spring-boot:run
-   ```
-   *Acesse `http://localhost:8761` no navegador para verificar a interface.*
-
-3. **Subir o API Gateway:**
-   ```bash
-   cd ../api-gateway
-   mvn spring-boot:run
-   ```
-
-4. **Subir o Condominio Service:**
-   ```bash
-   cd ../../condominio_service
-   mvn spring-boot:run
-   ```
-
-5. **Subir os outros microsserviços (iam, portaria, notificacao, auditoria) a partir de suas respectivas branches.**
+| Tecnologia | Por que foi usada |
+|---|---|
+| Spring Data JPA | Persistência de `Visitante`, `Encomenda` e `RegistroAcesso` com relacionamentos mais complexos entre entidades |
+| Spring Data Redis | TTL automático por tipo de encomenda: `CURTO_PRAZO` = 2 h (iFood), `MEDIO_PRAZO` = 7 dias (Amazon), `LONGO_PRAZO` = 30 dias (Shopee) — Redis garante expiração sem job agendado |
+| Spring Kafka | Publica `ENCOMENDA_RECEBIDA` ao registrar encomenda e eventos de acesso |
+| Resilience4j | Tolerância a falhas em chamadas a outros serviços |
+| Testcontainers (PostgreSQL + Redis) | ITs sobem banco e cache reais para validar a lógica de TTL e queries |
 
 ---
 
-## 📡 Guia de Referência de APIs do Ecossistema
+### notificacao-service (porta 8084)
 
-Esta seção serve como repositório de documentação de endpoints expostos no API Gateway (porta `8080`).
-
-### 🏢 1. condominio-service (Prefix: `/api/condominio`)
-
-#### 🏢 1.1 Unidades (`/api/condominio/unidades`)
-
-#### Criar Unidade
-* **Rota:** `POST http://localhost:8080/api/condominio/unidades`
-* **Body:**
-  ```json
-  {
-    "numero": "202",
-    "bloco": "B",
-    "tipo": "APARTAMENTO",
-    "area_m2": 72.5
-  }
-  ```
-
-#### Listar Todas as Unidades
-* **Rota:** `GET http://localhost:8080/api/condominio/unidades`
-
-#### Buscar Unidade por ID
-* **Rota:** `GET http://localhost:8080/api/condominio/unidades/{unidadeId}`
+| Tecnologia | Por que foi usada |
+|---|---|
+| Spring WebFlux + Netty | Serviço totalmente reativo (não-bloqueante) — adequado para um serviço de notificações que escuta eventos e entrega para múltiplos canais de forma concorrente sem bloquear threads |
+| Spring Data R2DBC | Driver reativo para PostgreSQL; sem JDBC bloqueante no caminho de dados — mantém o modelo reativo ponta-a-ponta |
+| reactor-kafka | Consumo reativo de tópicos Kafka; integração nativa com `Flux`/`Mono` do Project Reactor |
+| Resilience4j Reactor | Variante reativa do Resilience4j — `CircuitBreaker` e `Retry` compatíveis com `Mono`/`Flux` |
+| Spring Security Reactive | Versão reativa do Spring Security para WebFlux, consome headers `X-User-*` injetados pelo Gateway |
+| Flyway (JDBC datasource separado) | Flyway não suporta R2DBC diretamente; usa um `DataSource` JDBC apenas para rodar as migrations na inicialização, enquanto o runtime usa R2DBC |
 
 ---
 
-### 👥 2. Pessoas (`/api/condominio/pessoas`)
+### auditoria-service (porta 8085)
 
-#### Cadastrar Pessoa e Criar Credenciais no IAM
-* **Rota:** `POST http://localhost:8080/api/condominio/pessoas`
-* **Body:**
-  ```json
-  {
-    "nomeCompleto": "Carlos Alberto",
-    "email": "carlos@email.com",
-    "senhaInicial": "senhaForte123",
-    "documento": "98765432100",
-    "telefone": "21988887777",
-    "emailContato": "carlos.contato@email.com",
-    "role": "MORADOR"
-  }
-  ```
-
-#### Buscar Pessoa por ID
-* **Rota:** `GET http://localhost:8080/api/condominio/pessoas/{pessoaId}`
-
-#### Buscar Pessoa por CPF
-* **Rota:** `GET http://localhost:8080/api/condominio/pessoas?cpf=98765432100`
+| Tecnologia | Por que foi usada |
+|---|---|
+| Spring Data MongoDB | Documentos de auditoria têm schema flexível (payload varia por tipo de evento); MongoDB é ideal para armazenar JSON livre sem migrations de coluna |
+| Spring Kafka | Consome todos os eventos do ecossistema e persiste no MongoDB como trilha de auditoria imutável |
+| Flapdoodle Embed MongoDB | MongoDB embutido em memória para testes — não exige Docker no runner de CI |
+| spring-kafka-test (`@EmbeddedKafka`) | Kafka embutido para ITs sem infraestrutura externa |
 
 ---
 
-### 🔗 3. Vinculações (`/api/condominio/unidades/{id}/vinculacoes`)
+### infra/eureka-server (porta 8761)
 
-#### Criar Vinculação (Calcula escopos automaticamente)
-* **Rota:** `POST http://localhost:8080/api/condominio/unidades/{unidadeId}/vinculacoes`
-* **Body:**
-  ```json
-  {
-    "pessoaId": "uuid-da-pessoa",
-    "tipo": "RESIDENTE",
-    "dataInicio": "2026-06-01"
-  }
-  ```
-
-#### Listar Vinculações de uma Unidade
-* **Rota:** `GET http://localhost:8080/api/condominio/unidades/{unidadeId}/vinculacoes?apenasAtivas=true`
-
-#### Encerrar Vinculação
-* **Rota:** `PATCH http://localhost:8080/api/condominio/vinculacoes/{vinculacaoId}/encerrar`
-* **Body:**
-  ```json
-  {
-    "dataFim": "2026-12-31"
-  }
-  ```
+Spring Cloud Netflix Eureka Server puro. Todos os microsserviços registram seu endereço ao iniciar. O Gateway e os clientes Feign/WebClient resolvem `lb://nome` consultando o Eureka — nenhum IP é hardcoded.
 
 ---
 
-### 🚗 4. Veículos (`/api/condominio/unidades/{id}/veiculos`)
+## Segurança — Arquitetura JWT (TP3)
 
-#### Cadastrar Veículo em uma Unidade
-* **Rota:** `POST http://localhost:8080/api/condominio/unidades/{unidadeId}/veiculos`
-* **Body:**
-  ```json
-  {
-    "placa": "ABC1D23",
-    "modelo": "Gol",
-    "cor": "Branco",
-    "proprietarioPessoaId": "uuid-da-pessoa"
-  }
-  ```
+O modelo adotado é **Autenticação Centralizada na Borda**:
 
-#### Listar Veículos de uma Unidade
-* **Rota:** `GET http://localhost:8080/api/condominio/unidades/{unidadeId}/veiculos`
+```
+[ Cliente ]
+    │  Bearer Token no header Authorization
+    ▼
+[ API Gateway ]
+    ├── Token inválido/ausente → 401 (interrompe aqui)
+    └── Token válido → injeta X-User-Id, X-User-Email, X-User-Roles
+              │
+              ▼
+[ Microsserviço ]
+    └── Lê headers, monta SecurityContext, aplica @PreAuthorize
+```
 
----
+- O **IAM** é o único serviço que **emite** tokens.
+- O **Gateway** é o único que **valida** a assinatura — os microsserviços downstream confiam nos headers injetados.
+- `accessToken`: curta duração (15 min por padrão).
+- `refreshToken`: longa duração, endpoint `/api/iam/auth/refresh`.
 
-### 💼 5. Funcionários (`/api/condominio/funcionarios`)
+### Endpoints Públicos (sem autenticação)
 
-#### Cadastrar Funcionário
-* **Rota:** `POST http://localhost:8080/api/condominio/funcionarios`
-* **Body:**
-  ```json
-  {
-    "pessoaId": "uuid-da-pessoa",
-    "cargo": "PORTEIRO",
-    "dataAdmissao": "2026-01-15"
-  }
-  ```
+| Rota (Gateway) | Serviço | Descrição |
+|---|---|---|
+| `POST /api/iam/auth/login` | iam-service | Autenticação — retorna access + refresh token |
+| `POST /api/iam/auth/refresh` | iam-service | Renova o accessToken |
+| `GET /actuator/health` | Todos | Health check |
 
-#### Listar Funcionários
-* **Rota:** `GET http://localhost:8080/api/condominio/funcionarios?cargo=PORTEIRO`
+### Endpoints Protegidos — Roles Exigidas
 
----
-
-### 📣 6. Comunicados (`/api/condominio/comunicados`)
-
-#### Publicar Comunicado (Apenas Síndico)
-* **Rota:** `POST http://localhost:8080/api/condominio/comunicados`
-* **Body:**
-  ```json
-  {
-    "titulo": "Manutenção no Elevador",
-    "conteudo": "O elevador do Bloco A ficará indisponível na segunda-feira pela manhã.",
-    "visibilidade": "TODOS"
-  }
-  ```
-
-#### Listar Comunicados
-* **Rota:** `GET http://localhost:8080/api/condominio/comunicados?visibilidade=TODOS`
+| Rota (Gateway) | Método | Role mínima |
+|---|---|---|
+| `/api/condominio/unidades` | POST | SINDICO, ADMIN |
+| `/api/condominio/unidades/{id}/vinculacoes` | POST | SINDICO, ADMIN |
+| `/api/condominio/pessoas` | POST | SINDICO, ADMIN |
+| `/api/condominio/multas` | POST | **SINDICO** (exclusivo) |
+| `/api/condominio/comunicados` | POST | **SINDICO** (exclusivo) |
+| `/api/condominio/**` | GET | Qualquer autenticado |
+| `/api/iam/credenciais` | POST | ADMIN, SINDICO |
+| `/api/iam/credenciais/{id}/status` | PATCH | ADMIN |
+| `/api/portaria/**` | POST/PATCH | PORTEIRO |
+| `/api/notificacao/notificacoes/minhas` | GET | Qualquer autenticado |
+| `/api/notificacao/notificacoes/{id}/retry` | POST | ADMIN, SINDICO |
+| `/api/auditoria/**` | GET | ADMIN, SINDICO |
 
 ---
 
-### ⚠️ 7. Multas (`/api/condominio/unidades/{id}/multas`)
+## Como Rodar o Projeto (do Zero)
 
-#### Aplicar Multa a uma Unidade
-* **Rota:** `POST http://localhost:8080/api/condominio/unidades/{unidadeId}/multas`
-* **Body:**
-  ```json
-  {
-    "descricao": "Uso indevido das áreas comuns",
-    "valor": 150.00,
-    "categoria": "CONVIVENCIA",
-    "dataVencimento": "2026-07-01"
-  }
-  ```
+### Pré-requisitos
 
-#### Listar Multas de uma Unidade
-* **Rota:** `GET http://localhost:8080/api/condominio/unidades/{unidadeId}/multas?status=PENDENTE`
+- Docker Desktop instalado e rodando
+- Maven 3.9+ e JDK 21
 
-#### Atualizar Status de uma Multa
-* **Rota:** `PATCH http://localhost:8080/api/condominio/multas/{multaId}/status`
-* **Body:**
-  ```json
-  {
-    "status": "PAGA"
-  }
-  ```
+### 1. Gerar as imagens Docker
 
----
+Execute na raiz do projeto:
 
-### 🏊 8. Áreas Comuns e Reservas
+```bash
+# Compilar todos os módulos e gerar os JARs
+mvn package -DskipTests
 
-#### Cadastrar Área Comum
-* **Rota:** `POST http://localhost:8080/api/condominio/areas-comuns`
-* **Body:**
-  ```json
-  {
-    "nome": "Churrasqueira A",
-    "descricao": "Espaço com churrasqueira e freezer",
-    "capacidadeMaxima": 25,
-    "regras": "Uso permitido das 09:00 às 22:00."
-  }
-  ```
+# Construir cada imagem
+docker build -t condoplus/eureka-server      infra/eureka-server
+docker build -t condoplus/api-gateway        infra/api-gateway
+docker build -t condoplus/iam-service        iam_service
+docker build -t condoplus/condominio-service condominio_service
+docker build -t condoplus/portaria-service   portaria-service
+docker build -t condoplus/notificacao-service notificacao-service
+docker build -t condoplus/auditoria-service  auditoria_service
+```
 
-#### Criar Reserva de Área Comum (Evita conflito de data/horário)
-* **Rota:** `POST http://localhost:8080/api/condominio/reservas`
-* **Body:**
-  ```json
-  {
-    "areaComumId": "uuid-da-area-comum",
-    "dataReserva": "2026-06-15",
-    "horaInicio": "12:00",
-    "horaFim": "18:00"
-  }
-  ```
+### 2. Subir tudo com Docker Compose
 
----
+```bash
+docker compose up -d
+```
 
-### 🔑 2. iam-service (Espaço Reservado)
-* **Desenvolvedor Responsável:** Integrante 2
-* **Caminho Base no Gateway:** `/api/iam/**`
+Isso sobe os 12 containers na ordem correta:
 
-> [!NOTE]
-> Espaço reservado para o desenvolvedor do `iam-service` documentar suas rotas e payloads (ex: registro de credenciais, login, validação de tokens).
+| Container | Porta | Descrição |
+|---|---|---|
+| `condoplus-postgres` | 5432 | PostgreSQL 16 (todos os schemas de negócio) |
+| `condoplus-postgres-init` | — | Inicializa os schemas/databases |
+| `condoplus-mongo` | 27017 | MongoDB 7 (auditoria) |
+| `condoplus-kafka` | 9092 | Apache Kafka 3.7 |
+| `condoplus-redis` | 6379 | Redis 7 (TTL de encomendas) |
+| `condoplus-eureka` | 8761 | Eureka Server |
+| `condoplus-iam` | 8081 | IAM Service |
+| `condoplus-condominio` | 8082 | Condomínio Service |
+| `condoplus-portaria` | 8083 | Portaria Service |
+| `condoplus-notificacao` | 8084 | Notificação Service |
+| `condoplus-auditoria` | 8085 | Auditoria Service |
+| `condoplus-gateway` | 8080 | API Gateway (único ponto de entrada) |
 
-* **Exemplo de Rota:** `POST http://localhost:8080/api/iam/...`
-* **Exemplo de Payload:**
-  ```json
-  {}
-  ```
+### 3. Verificar se está rodando
 
----
+```bash
+# Verificar status de todos os containers
+docker compose ps
 
-### 🚪 3. portaria-service (Espaço Reservado)
-* **Desenvolvedor Responsável:** Integrante 3
-* **Caminho Base no Gateway:** `/api/portaria/**`
+# Dashboard do Eureka — lista serviços registrados
+# Acesse http://localhost:8761 no navegador
+```
 
-> [!NOTE]
-> Espaço reservado para o desenvolvedor do `portaria-service` documentar suas rotas e payloads (ex: encomendas recebidas, liberação de visitantes/prestadores).
+### 4. Primeiro acesso
 
-* **Exemplo de Rota:** `POST http://localhost:8080/api/portaria/...`
-* **Exemplo de Payload:**
-  ```json
-  {}
-  ```
+O Flyway aplica `V2__seed_admin.sql` automaticamente ao subir o IAM. Credencial inicial:
 
----
+```
+email: admin@condoplus.com
+senha: Admin@1234
+```
 
-### 🔔 4. notificacao-service (Espaço Reservado)
-* **Desenvolvedor Responsável:** Integrante 4
-* **Caminho Base no Gateway:** `/api/notificacoes/**`
+```bash
+# Login
+curl -s -X POST http://localhost:8080/api/iam/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@condoplus.com","senha":"Admin@1234"}'
 
-> [!NOTE]
-> Espaço reservado para o desenvolvedor do `notificacao-service` documentar suas rotas e payloads (ex: disparo de alertas, emails, sms e logs).
+# Usar o token retornado
+curl -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  http://localhost:8080/api/condominio/unidades
+```
 
-* **Exemplo de Rota:** `POST http://localhost:8080/api/notificacoes/...`
-* **Exemplo de Payload:**
-  ```json
-  {}
-  ```
+### 5. Coleção Postman
+
+Importe o arquivo `postman/condoplus.postman_collection.json`. Ele contém todos os endpoints com bodies corretos, variáveis de coleção e um script que salva o token automaticamente após o login.
+
+### Parar o ambiente
+
+```bash
+docker compose down          # para containers (volumes preservados)
+docker compose down -v       # para containers e apaga todos os dados
+```
 
 ---
 
-### 📊 5. auditoria-service (Espaço Reservado)
-* **Desenvolvedor Responsável:** Integrante 5
-* **Caminho Base no Gateway:** `/api/auditoria/**`
+## Como Rodar os Testes
 
-> [!NOTE]
-> Espaço reservado para o desenvolvedor do `auditoria-service` documentar suas rotas e payloads (ex: gravação e consulta de logs estruturados de auditoria).
+Cada serviço separa testes unitários (Surefire) de testes de integração (Failsafe) por convenção de nomenclatura:
+- `*Test.java` → unitários, sem infraestrutura externa
+- `*IT.java` → integração, sobem banco/Kafka/Redis via Testcontainers ou embarcado
 
-* **Exemplo de Rota:** `POST http://localhost:8080/api/auditoria/...`
-* **Exemplo de Payload:**
-  ```json
-  {}
-  ```
+### condominio-service
+
+```bash
+# Unitários apenas
+mvn test -pl condominio_service
+
+# Unitários + integração (Testcontainers sobe PostgreSQL real + Kafka embutido)
+mvn verify -pl condominio_service
+```
+
+| Classe | Tipo | O que testa |
+|---|---|---|
+| `EscopoDerivacaoServiceTest` | Unitário | Lógica de derivação de escopos de vinculação |
+| `PessoaServiceTest` | Unitário | Criação de pessoa com mock do IamClient |
+| `UnidadeRepositoryIT` | Integração | Queries do repositório contra PostgreSQL real (`@DataJdbcTest`) |
+| `CondominioKafkaIT` | Integração | Publicação de eventos Kafka |
+
+### iam-service
+
+```bash
+# Unitários
+mvn test -pl iam_service
+
+# Integração (Testcontainers sobe PostgreSQL, valida fluxo login → JWT completo)
+mvn failsafe:integration-test failsafe:verify -pl iam_service
+
+# Tudo de uma vez
+mvn verify -pl iam_service
+```
+
+| Classe | Tipo | O que testa |
+|---|---|---|
+| `JwtServiceTest` | Unitário | Geração e validação de tokens |
+| `AutenticacaoServiceTest` | Unitário | Fluxo de login com mock do repositório |
+| `AutenticacaoControllerTest` | Unitário | Camada HTTP |
+| `AutenticacaoIntegrationIT` | Integração | Login + refresh contra banco real |
+
+### portaria-service
+
+```bash
+mvn verify -pl portaria-service
+```
+
+| Classe | Tipo | O que testa |
+|---|---|---|
+| `VisitanteServiceTest` | Unitário | Regras de autorização de visitantes |
+| `VisitanteRepositoryIT` | Integração | Queries contra PostgreSQL real |
+| `EncomendaServiceIT` | Integração | Lógica de TTL e registro de encomendas |
+
+### notificacao-service
+
+```bash
+# Unitários
+mvn test -pl notificacao-service
+
+# Integração (@DataR2dbcTest sobe PostgreSQL via Testcontainers)
+mvn verify -pl notificacao-service
+```
+
+| Classe | Tipo | O que testa |
+|---|---|---|
+| `NotificacaoServiceTest` | Unitário | Processamento de eventos Kafka |
+| `PreferenciaControllerTest` | Unitário | Endpoints de preferências com mock de segurança |
+| `PreferenciaRepositoryIT` | Integração | Operações reativas contra PostgreSQL real |
+
+### auditoria-service
+
+```bash
+mvn verify -f auditoria_service/pom.xml
+```
+
+| Classe | Tipo | O que testa |
+|---|---|---|
+| `AuditoriaKafkaIntegracaoTest` | Integração | Consome evento Kafka e persiste no MongoDB embutido (Flapdoodle + `@EmbeddedKafka`) |
+
+> **Atenção:** exige Docker para Testcontainers quando presente. O Flapdoodle (MongoDB embutido) não funciona no Ubuntu 24 — por isso o CI usa `ubuntu-22.04`.
+
+### api-gateway e eureka-server
+
+```bash
+mvn test -pl infra/api-gateway
+mvn test -pl infra/eureka-server
+```
+
+Apenas verificam que o contexto Spring carrega corretamente.
+
+---
+
+## GitHub Actions — CI por Serviço
+
+Cada módulo tem seu próprio workflow em `.github/workflows/`. Os workflows são disparados **apenas quando arquivos do módulo ou o `pom.xml` raiz mudam** — um commit que toca só o `portaria-service` não roda o CI do `condominio-service`.
+
+| Workflow | Arquivo | Runner | O que roda |
+|---|---|---|---|
+| API Gateway | `api-gateway.yml` | ubuntu-latest | `mvn test -pl infra/api-gateway` |
+| Eureka Server | `eureka-server.yml` | ubuntu-latest | `mvn test -pl infra/eureka-server` |
+| IAM Service | `iam-service.yml` | ubuntu-latest | Unit tests + Integration tests (Failsafe) em steps separados |
+| Condomínio | `condominio-service.yml` | ubuntu-latest | `mvn test -pl condominio_service` |
+| Portaria | `portaria-service.yml` | ubuntu-latest | `mvn verify -pl portaria-service` |
+| Notificação | `notificacao-service.yml` | ubuntu-latest | Build → unit tests → integration tests em etapas separadas |
+| Auditoria | `auditoria-service-ci.yml` | **ubuntu-22.04** | `mvn verify -f auditoria_service/pom.xml` (Flapdoodle + MongoDB 7 não é compatível com Ubuntu 24) |
+
+Todos os workflows usam:
+- **JDK 21 Temurin** via `actions/setup-java@v4`
+- **Cache Maven** — dependências não são rebaixadas do zero a cada execução
+- Filtro de **paths por módulo** — evita execuções desnecessárias
+
+---
+
+## Estrutura de Pastas
+
+```
+condo_plus/
+│
+├── pom.xml                               # POM raiz — parent de todos os módulos
+├── docker-compose.yml                    # Orquestração completa (12 containers)
+│
+├── postman/
+│   └── condoplus.postman_collection.json # Coleção com todos os endpoints e variables
+│
+├── docs/
+│   ├── TP1.md / TP2.md / TP3.md         # Enunciados dos trabalhos práticos
+│   └── docs_integrantes/                 # Documentação individual por integrante
+│
+├── infra/
+│   ├── eureka-server/                    # Spring Cloud Eureka Server (:8761)
+│   │   ├── src/
+│   │   ├── Dockerfile
+│   │   └── pom.xml
+│   └── api-gateway/                      # Spring Cloud Gateway (:8080)
+│       ├── src/
+│       ├── Dockerfile
+│       └── pom.xml
+│
+├── iam_service/                          # Autenticação e credenciais (:8081)
+│   ├── src/
+│   ├── Dockerfile
+│   └── pom.xml
+│
+├── condominio_service/                   # Core: unidades, pessoas, multas, reservas (:8082)
+│   ├── src/
+│   ├── Dockerfile
+│   └── pom.xml
+│
+├── portaria-service/                     # Controle de acesso, visitantes, encomendas (:8083)
+│   ├── src/
+│   ├── Dockerfile
+│   └── pom.xml
+│
+├── notificacao-service/                  # Notificações reativas via Kafka (:8084)
+│   ├── src/
+│   ├── Dockerfile
+│   └── pom.xml
+│
+├── auditoria_service/                    # Trilha de auditoria em MongoDB (:8085)
+│   ├── src/
+│   ├── Dockerfile
+│   └── pom.xml
+│
+└── .github/
+    └── workflows/                        # 7 workflows de CI (um por módulo)
+        ├── api-gateway.yml
+        ├── eureka-server.yml
+        ├── iam-service.yml
+        ├── condominio-service.yml
+        ├── portaria-service.yml
+        ├── notificacao-service.yml
+        └── auditoria-service-ci.yml
+```
+
+---
+
+## Estrutura Interna dos Serviços
+
+### iam-service
+
+```
+iam_service/src/main/java/com/condoplus/iam/
+├── config/          # SecurityConfig, JwtConfig
+├── controller/      # AutenticacaoController (/auth/login, /auth/refresh)
+│                    # CredencialController (/credenciais)
+├── domain/          # Credencial, RefreshToken
+│                    # TipoRole: ADMIN, SINDICO, PORTEIRO, MORADOR, FUNCIONARIO
+│                    # StatusCredencial: ATIVO, BLOQUEADO, BLOQUEADO_TEMPORARIAMENTE
+├── dto/             # LoginRequest, TokenResponse, CriarCredencialRequest
+├── repository/      # CredencialRepository, RefreshTokenRepository
+├── security/        # HeaderAuthenticationFilter (lê X-User-* do Gateway)
+└── service/         # AutenticacaoService, JwtService, CredencialService
+```
+
+### condominio-service
+
+```
+condominio_service/src/main/java/com/condoplus/condominio/
+├── config/          # SecurityConfig, KafkaConfig, WebClientConfig
+├── estrutura/
+│   ├── client/      # IamClient (Resilience4j + WebClient → iam-service)
+│   ├── controller/  # UnidadeController, PessoaController, VeiculoController
+│   │                # FuncionarioController, AreaComumController
+│   ├── domain/      # Unidade (Aggregate Root), Pessoa, Veiculo, Funcionario, Vinculacao
+│   │                # CargoFuncionario: PORTEIRO, JARDINEIRO, LIMPEZA, ADMINISTRATIVO
+│   │                # TipoVinculacao: PROPRIETARIO, RESIDENTE, PROPRIETARIO_RESIDENTE
+│   ├── dto/
+│   ├── kafka/       # EventoPublisher
+│   ├── repository/
+│   └── service/     # UnidadeService, PessoaService, EscopoDerivacaoService
+└── convivencia/
+    ├── controller/  # MultaController, ComunicadoController, ReservaController
+    ├── domain/      # Multa, Comunicado, Reserva
+    │                # CategoriaMulta: CONVIVENCIA, ESTRUTURAL
+    │                # PublicoAlvo: TODOS, PROPRIETARIOS, RESIDENTES, BLOCO_ESPECIFICO
+    ├── dto/
+    ├── repository/
+    └── service/
+```
+
+### portaria-service
+
+```
+portaria-service/src/main/java/com/condoplus/portaria_service/
+├── config/          # SecurityConfig, RedisConfig, KafkaConfig
+├── controller/      # EncomendaController, VisitanteController, AcessoController
+├── model/
+│   ├── entity/      # Encomenda, Visitante, RegistroAcesso, AutorizacaoVisitante
+│   └── enums/       # TipoEncomenda: CURTO_PRAZO, MEDIO_PRAZO, LONGO_PRAZO
+│                    # TipoVisitante: SOCIAL, VISITANTE, PRESTADOR
+│                    # TipoPessoaAcesso: MORADOR, VISITANTE, FUNCIONARIO, PRESTADOR
+├── repository/
+└── service/         # EncomendaService, VisitanteService, AcessoService
+```
+
+### notificacao-service
+
+```
+notificacao-service/src/main/java/com/condoplus/notificacao/
+├── config/          # SecurityConfig (reactive), KafkaConfig, R2dbcConfig
+├── controller/      # NotificacaoController (/notificacoes/minhas, /{id}/retry)
+│                    # PreferenciaController (/notificacoes/preferencias)
+├── domain/          # Notificacao, Preferencia
+│                    # TipoEvento: COMUNICADO_PUBLICADO, MULTA_APLICADA,
+│                    #             ENCOMENDA_RECEBIDA, RESERVA_CONFIRMADA
+│                    # Canal: EMAIL, PUSH, WHATSAPP, IN_APP
+├── dto/
+├── kafka/           # NotificacaoConsumer (reactor-kafka)
+├── repository/      # NotificacaoRepository, PreferenciaRepository (ambos R2DBC)
+└── service/         # NotificacaoService (Mono/Flux), PreferenciaService
+```
+
+### auditoria-service
+
+```
+auditoria_service/src/main/java/com/condoplus/auditoria/
+├── config/          # SecurityConfig, KafkaConfig, MongoConfig
+├── controller/      # AuditoriaController (/registros, /anomalias)
+├── domain/          # RegistroAuditoria (Document MongoDB), Anomalia
+│                    # StatusAnomalia: ABERTA, RECONHECIDA, RESOLVIDA
+├── dto/
+├── kafka/           # AuditoriaConsumer (escuta todos os tópicos de eventos)
+├── repository/      # RegistroAuditoriaRepository, AnomaliaRepository
+└── service/         # AuditoriaService
+```
+
+### api-gateway
+
+```
+infra/api-gateway/src/main/java/com/condoplus/gateway/
+├── config/          # GatewayConfig (rotas por application.yml)
+├── filter/          # JwtAuthenticationFilter (valida JWT + injeta headers X-User-*)
+│                    # CorrelationGatewayFilter (X-Correlation-ID)
+└── security/        # JwtUtil (decodificação e validação HMAC-SHA256)
+```
+
+---
+
+## Fluxo de Cadastro (ponta-a-ponta)
+
+```
+1. POST /api/iam/auth/login
+   └── Retorna accessToken (ADMIN ou SINDICO)
+
+2. POST /api/condominio/pessoas               [Authorization: Bearer <token>]
+   └── Cria Pessoa no condomínio
+   └── Chama iam-service (via Circuit Breaker) para criar Credencial
+
+3. POST /api/condominio/unidades
+   └── Cria Unidade
+
+4. POST /api/condominio/unidades/{id}/vinculacoes
+   └── Vincula Pessoa à Unidade como PROPRIETARIO / RESIDENTE / PROPRIETARIO_RESIDENTE
+
+5. POST /api/portaria/encomendas              [Authorization: Bearer <token PORTEIRO>]
+   └── Registra encomenda com TTL no Redis
+   └── Publica ENCOMENDA_RECEBIDA no Kafka
+        ├── notificacao-service: entrega notificação no canal preferido do morador
+        └── auditoria-service: grava trilha imutável no MongoDB
+```
