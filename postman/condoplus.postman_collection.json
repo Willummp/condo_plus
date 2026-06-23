@@ -1,0 +1,1222 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "CondoPlus API",
+    "description": "Coleção completa de todos os endpoints do CondoPlus.\n\nVariáveis de coleção:\n- baseUrl: http://localhost:8080 (API Gateway)\n- token: preenchido automaticamente após login\n- refreshToken: preenchido automaticamente após login\n- Demais IDs: preencher manualmente após criar os recursos",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",       "value": "http://localhost:8080", "type": "string" },
+    { "key": "token",         "value": "",                      "type": "string" },
+    { "key": "refreshToken",  "value": "",                      "type": "string" },
+    { "key": "pessoaId",      "value": "",                      "type": "string" },
+    { "key": "unidadeId",     "value": "",                      "type": "string" },
+    { "key": "vinculacaoId",  "value": "",                      "type": "string" },
+    { "key": "veiculoId",     "value": "",                      "type": "string" },
+    { "key": "funcionarioId", "value": "",                      "type": "string" },
+    { "key": "areaComumId",   "value": "",                      "type": "string" },
+    { "key": "reservaId",     "value": "",                      "type": "string" },
+    { "key": "multaId",       "value": "",                      "type": "string" },
+    { "key": "comunicadoId",  "value": "",                      "type": "string" },
+    { "key": "encomendaId",   "value": "",                      "type": "string" },
+    { "key": "visitanteId",   "value": "",                      "type": "string" },
+    { "key": "credencialId",  "value": "",                      "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "Auth (IAM)",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.accessToken) {",
+                  "    pm.collectionVariables.set('token', r.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', r.refreshToken);",
+                  "    console.log('Token salvo automaticamente.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@condoplus.com\",\n  \"senha\": \"Admin@1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["email", "senha"],
+                    "properties": {
+                      "email": { "type": "string", "format": "email" },
+                      "senha": { "type": "string", "maxLength": 128 }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/iam/auth/login", "host": ["{{baseUrl}}"], "path": ["api","iam","auth","login"] },
+            "description": "Rota pública — não exige JWT. Token salvo automaticamente na variável {{token}}."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.accessToken) {",
+                  "    pm.collectionVariables.set('token', r.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', r.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{refreshToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/iam/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api","iam","auth","refresh"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "IAM - Credenciais",
+      "item": [
+        {
+          "name": "Criar Credencial",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"usuario@condoplus.com\",\n  \"senha\": \"senha123456\",\n  \"roles\": [\"MORADOR\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["email", "senha", "roles"],
+                    "properties": {
+                      "email": { "type": "string", "format": "email", "maxLength": 320 },
+                      "senha": { "type": "string", "minLength": 8, "maxLength": 128 },
+                      "roles": { "type": "array", "items": { "type": "string", "enum": ["ADMIN","SINDICO","PORTEIRO","MORADOR","FUNCIONARIO"] } }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/iam/credenciais", "host": ["{{baseUrl}}"], "path": ["api","iam","credenciais"] },
+            "description": "Roles disponíveis: ADMIN, SINDICO, MORADOR, PORTEIRO. Exige ADMIN ou SINDICO."
+          }
+        },
+        {
+          "name": "Buscar Credencial por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/iam/credenciais/{{credencialId}}", "host": ["{{baseUrl}}"], "path": ["api","iam","credenciais","{{credencialId}}"] }
+          }
+        },
+        {
+          "name": "Alterar Status da Credencial",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"novoStatus\": \"BLOQUEADO\",\n  \"motivo\": \"Suspeita de uso indevido\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["novoStatus"],
+                    "properties": {
+                      "novoStatus": { "type": "string", "enum": ["ATIVO","BLOQUEADO","BLOQUEADO_TEMPORARIAMENTE"] },
+                      "motivo": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/iam/credenciais/{{credencialId}}/status", "host": ["{{baseUrl}}"], "path": ["api","iam","credenciais","{{credencialId}}","status"] },
+            "description": "Status: ATIVO, BLOQUEADO, BLOQUEADO_TEMPORARIAMENTE. Exige ADMIN."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Condomínio - Unidades",
+      "item": [
+        {
+          "name": "Criar Unidade",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": \"101\",\n  \"bloco\": \"A\",\n  \"tipo\": \"APARTAMENTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["numero", "tipo"],
+                    "properties": {
+                      "numero": { "type": "string", "maxLength": 20 },
+                      "bloco":  { "type": "string", "maxLength": 20 },
+                      "tipo":   { "type": "string", "enum": ["APARTAMENTO","CASA"] }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/condominio/unidades", "host": ["{{baseUrl}}"], "path": ["api","condominio","unidades"] },
+            "description": "Tipo: APARTAMENTO, CASA. Exige ADMIN ou SINDICO."
+          }
+        },
+        {
+          "name": "Listar Unidades",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/condominio/unidades",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","condominio","unidades"],
+              "query": [{ "key": "bloco", "value": "A", "disabled": true }]
+            }
+          }
+        },
+        {
+          "name": "Buscar Unidade por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/unidades/{{unidadeId}}", "host": ["{{baseUrl}}"], "path": ["api","condominio","unidades","{{unidadeId}}"] }
+          }
+        },
+        {
+          "name": "Vincular Pessoa à Unidade",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pessoaId\": \"{{pessoaId}}\",\n  \"tipo\": \"PROPRIETARIO_RESIDENTE\",\n  \"dataInicio\": \"2026-06-22\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["pessoaId", "tipo", "dataInicio"],
+                    "properties": {
+                      "pessoaId":   { "type": "string", "format": "uuid" },
+                      "tipo":       { "type": "string", "enum": ["PROPRIETARIO","RESIDENTE","PROPRIETARIO_RESIDENTE"] },
+                      "dataInicio": { "type": "string", "format": "date" }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/condominio/unidades/{{unidadeId}}/vinculacoes", "host": ["{{baseUrl}}"], "path": ["api","condominio","unidades","{{unidadeId}}","vinculacoes"] },
+            "description": "Tipo: PROPRIETARIO, RESIDENTE, PROPRIETARIO_RESIDENTE. Escopos calculados automaticamente. Exige ADMIN ou SINDICO."
+          }
+        },
+        {
+          "name": "Listar Vinculações da Unidade",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/condominio/unidades/{{unidadeId}}/vinculacoes?apenasAtivas=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","condominio","unidades","{{unidadeId}}","vinculacoes"],
+              "query": [{ "key": "apenasAtivas", "value": "true" }]
+            }
+          }
+        },
+        {
+          "name": "Encerrar Vinculação",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/unidades/vinculacoes/{{vinculacaoId}}/encerrar", "host": ["{{baseUrl}}"], "path": ["api","condominio","unidades","vinculacoes","{{vinculacaoId}}","encerrar"] },
+            "description": "Exige ADMIN ou SINDICO."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Condomínio - Pessoas",
+      "item": [
+        {
+          "name": "Cadastrar Pessoa",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nomeCompleto\": \"João Silva\",\n  \"email\": \"joao@condoplus.com\",\n  \"senhaInicial\": \"senha123456\",\n  \"documento\": \"12345678901\",\n  \"telefone\": \"(21) 99999-0000\",\n  \"emailContato\": \"joao@condoplus.com\",\n  \"role\": \"MORADOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["nomeCompleto", "email", "senhaInicial", "documento", "role"],
+                    "properties": {
+                      "nomeCompleto":  { "type": "string", "maxLength": 200 },
+                      "email":         { "type": "string", "format": "email" },
+                      "senhaInicial":  { "type": "string", "minLength": 8, "maxLength": 128 },
+                      "documento":     { "type": "string", "minLength": 11, "maxLength": 14, "pattern": "^[0-9]+$" },
+                      "telefone":      { "type": "string" },
+                      "emailContato":  { "type": "string", "format": "email" },
+                      "role":          { "type": "string", "enum": ["ADMIN","SINDICO","PORTEIRO","MORADOR","FUNCIONARIO"] }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/condominio/pessoas", "host": ["{{baseUrl}}"], "path": ["api","condominio","pessoas"] },
+            "description": "Cria a Pessoa no condomínio E a credencial no IAM em uma única chamada. role: MORADOR, SINDICO, PORTEIRO. Exige ADMIN ou SINDICO."
+          }
+        },
+        {
+          "name": "Listar Pessoas",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/pessoas", "host": ["{{baseUrl}}"], "path": ["api","condominio","pessoas"] },
+            "description": "Exige ADMIN ou SINDICO."
+          }
+        },
+        {
+          "name": "Buscar Pessoa por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/pessoas/{{pessoaId}}", "host": ["{{baseUrl}}"], "path": ["api","condominio","pessoas","{{pessoaId}}"] }
+          }
+        },
+        {
+          "name": "Buscar Pessoa por CPF",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/condominio/pessoas?cpf=12345678901",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","condominio","pessoas"],
+              "query": [{ "key": "cpf", "value": "12345678901" }]
+            },
+            "description": "Exige ADMIN, SINDICO ou PORTEIRO."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Condomínio - Veículos",
+      "item": [
+        {
+          "name": "Cadastrar Veículo",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC1D23\",\n  \"modelo\": \"Honda Civic\",\n  \"cor\": \"Prata\",\n  \"unidadeId\": \"{{unidadeId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["placa", "modelo", "cor", "unidadeId"],
+                    "properties": {
+                      "placa":     { "type": "string", "pattern": "^[a-zA-Z0-9-]{7,8}$" },
+                      "modelo":    { "type": "string", "maxLength": 100 },
+                      "cor":       { "type": "string", "maxLength": 50 },
+                      "unidadeId": { "type": "string", "format": "uuid" }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/condominio/veiculos", "host": ["{{baseUrl}}"], "path": ["api","condominio","veiculos"] }
+          }
+        },
+        {
+          "name": "Listar Todos os Veículos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/veiculos", "host": ["{{baseUrl}}"], "path": ["api","condominio","veiculos"] },
+            "description": "Exige ADMIN, SINDICO ou PORTEIRO."
+          }
+        },
+        {
+          "name": "Buscar Veículo por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/veiculos/{{veiculoId}}", "host": ["{{baseUrl}}"], "path": ["api","condominio","veiculos","{{veiculoId}}"] }
+          }
+        },
+        {
+          "name": "Listar Veículos por Unidade",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/veiculos/unidade/{{unidadeId}}", "host": ["{{baseUrl}}"], "path": ["api","condominio","veiculos","unidade","{{unidadeId}}"] }
+          }
+        },
+        {
+          "name": "Desativar Veículo",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/veiculos/{{veiculoId}}", "host": ["{{baseUrl}}"], "path": ["api","condominio","veiculos","{{veiculoId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Condomínio - Funcionários",
+      "item": [
+        {
+          "name": "Admitir Funcionário",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pessoaId\": \"{{pessoaId}}\",\n  \"cargo\": \"PORTEIRO\",\n  \"dataAdmissao\": \"2026-06-22\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["pessoaId", "cargo", "dataAdmissao"],
+                    "properties": {
+                      "pessoaId":     { "type": "string", "format": "uuid" },
+                      "cargo":        { "type": "string", "enum": ["PORTEIRO","JARDINEIRO","LIMPEZA","ADMINISTRATIVO"] },
+                      "dataAdmissao": { "type": "string", "format": "date" }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/condominio/funcionarios", "host": ["{{baseUrl}}"], "path": ["api","condominio","funcionarios"] },
+            "description": "Cargo: PORTEIRO, JARDINEIRO, LIMPEZA, ADMINISTRATIVO. Exige ADMIN ou SINDICO."
+          }
+        },
+        {
+          "name": "Listar Funcionários",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/condominio/funcionarios?apenasAtivos=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","condominio","funcionarios"],
+              "query": [
+                { "key": "apenasAtivos", "value": "true" },
+                { "key": "cargo",        "value": "PORTEIRO", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar Funcionário por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/funcionarios/{{funcionarioId}}", "host": ["{{baseUrl}}"], "path": ["api","condominio","funcionarios","{{funcionarioId}}"] }
+          }
+        },
+        {
+          "name": "Desligar Funcionário",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/condominio/funcionarios/{{funcionarioId}}/desligar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","condominio","funcionarios","{{funcionarioId}}","desligar"],
+              "query": [{ "key": "dataDesligamento", "value": "2026-06-22", "disabled": true }]
+            },
+            "description": "dataDesligamento opcional — usa a data de hoje se omitido. Exige ADMIN ou SINDICO."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Condomínio - Áreas Comuns",
+      "item": [
+        {
+          "name": "Cadastrar Área Comum",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Piscina\",\n  \"capacidadeMaxima\": 20,\n  \"valorReserva\": 50.00,\n  \"regras\": \"Proibido uso após 22h. Traje de banho obrigatório.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["nome", "capacidadeMaxima"],
+                    "properties": {
+                      "nome":             { "type": "string", "maxLength": 100 },
+                      "capacidadeMaxima": { "type": "integer", "minimum": 1 },
+                      "valorReserva":     { "type": "number", "minimum": 0 },
+                      "regras":           { "type": "string" }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/condominio/areas-comuns", "host": ["{{baseUrl}}"], "path": ["api","condominio","areas-comuns"] },
+            "description": "valorReserva pode ser null (gratuito). Exige ADMIN ou SINDICO."
+          }
+        },
+        {
+          "name": "Listar Áreas Comuns",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/condominio/areas-comuns?apenasAtivas=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","condominio","areas-comuns"],
+              "query": [{ "key": "apenasAtivas", "value": "true" }]
+            }
+          }
+        },
+        {
+          "name": "Buscar Área Comum por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/areas-comuns/{{areaComumId}}", "host": ["{{baseUrl}}"], "path": ["api","condominio","areas-comuns","{{areaComumId}}"] }
+          }
+        },
+        {
+          "name": "Atualizar Área Comum",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Piscina Adulto\",\n  \"capacidadeMaxima\": 25,\n  \"valorReserva\": 60.00,\n  \"regras\": \"Proibido uso após 22h.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["nome", "capacidadeMaxima"],
+                    "properties": {
+                      "nome":             { "type": "string", "maxLength": 100 },
+                      "capacidadeMaxima": { "type": "integer", "minimum": 1 },
+                      "valorReserva":     { "type": "number", "minimum": 0 },
+                      "regras":           { "type": "string" }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/condominio/areas-comuns/{{areaComumId}}", "host": ["{{baseUrl}}"], "path": ["api","condominio","areas-comuns","{{areaComumId}}"] }
+          }
+        },
+        {
+          "name": "Desativar Área Comum",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/areas-comuns/{{areaComumId}}/desativar", "host": ["{{baseUrl}}"], "path": ["api","condominio","areas-comuns","{{areaComumId}}","desativar"] }
+          }
+        },
+        {
+          "name": "Ativar Área Comum",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/areas-comuns/{{areaComumId}}/ativar", "host": ["{{baseUrl}}"], "path": ["api","condominio","areas-comuns","{{areaComumId}}","ativar"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Condomínio - Reservas",
+      "item": [
+        {
+          "name": "Criar Reserva",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"areaComumId\": \"{{areaComumId}}\",\n  \"dataReserva\": \"2026-06-25\",\n  \"horaInicio\": \"14:00:00\",\n  \"horaFim\": \"16:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["areaComumId", "dataReserva", "horaInicio", "horaFim"],
+                    "properties": {
+                      "areaComumId": { "type": "string", "format": "uuid" },
+                      "dataReserva": { "type": "string", "format": "date" },
+                      "horaInicio":  { "type": "string", "example": "09:00:00" },
+                      "horaFim":     { "type": "string", "example": "11:00:00" }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/condominio/reservas", "host": ["{{baseUrl}}"], "path": ["api","condominio","reservas"] },
+            "description": "moradorId extraído automaticamente do JWT."
+          }
+        },
+        {
+          "name": "Listar Reservas por Área e Data",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/condominio/reservas?areaComumId={{areaComumId}}&data=2026-06-25",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","condominio","reservas"],
+              "query": [
+                { "key": "areaComumId", "value": "{{areaComumId}}" },
+                { "key": "data",        "value": "2026-06-25" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancelar Reserva",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/reservas/{{reservaId}}", "host": ["{{baseUrl}}"], "path": ["api","condominio","reservas","{{reservaId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Condomínio - Multas",
+      "item": [
+        {
+          "name": "Aplicar Multa",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": \"{{unidadeId}}\",\n  \"valor\": 500.00,\n  \"motivo\": \"Barulho excessivo após as 22h\",\n  \"categoria\": \"CONVIVENCIA\",\n  \"dataVencimento\": \"2026-07-22\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["unidadeId", "valor", "motivo", "categoria", "dataVencimento"],
+                    "properties": {
+                      "unidadeId":         { "type": "string", "format": "uuid" },
+                      "valor":             { "type": "number", "minimum": 0.01 },
+                      "motivo":            { "type": "string" },
+                      "categoria":         { "type": "string", "enum": ["CONVIVENCIA","ESTRUTURAL"] },
+                      "anexoEvidenciaUrl": { "type": "string" },
+                      "dataVencimento":    { "type": "string", "format": "date" }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/condominio/multas", "host": ["{{baseUrl}}"], "path": ["api","condominio","multas"] },
+            "description": "Exige role SINDICO."
+          }
+        },
+        {
+          "name": "Buscar Multa por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/multas/{{multaId}}", "host": ["{{baseUrl}}"], "path": ["api","condominio","multas","{{multaId}}"] }
+          }
+        },
+        {
+          "name": "Listar Multas por Unidade",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/condominio/multas/unidade/{{unidadeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","condominio","multas","unidade","{{unidadeId}}"],
+              "query": [{ "key": "status", "value": "PENDENTE", "disabled": true }]
+            }
+          }
+        },
+        {
+          "name": "Atualizar Status da Multa",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/condominio/multas/{{multaId}}/status?status=PAGA",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","condominio","multas","{{multaId}}","status"],
+              "query": [{ "key": "status", "value": "PAGA" }]
+            },
+            "description": "Status: PENDENTE, PAGA, CANCELADA. Exige ADMIN ou SINDICO."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Condomínio - Comunicados",
+      "item": [
+        {
+          "name": "Publicar Comunicado (Geral)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Manutenção da piscina\",\n  \"conteudo\": \"A piscina estará em manutenção nos dias 25 e 26/06. Pedimos desculpas pelo transtorno.\",\n  \"visibilidade\": \"TODOS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["titulo", "conteudo", "visibilidade"],
+                    "properties": {
+                      "titulo":       { "type": "string", "maxLength": 150 },
+                      "conteudo":     { "type": "string" },
+                      "visibilidade": { "type": "string", "enum": ["TODOS","PROPRIETARIOS","RESIDENTES","BLOCO_ESPECIFICO"] }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/condominio/comunicados", "host": ["{{baseUrl}}"], "path": ["api","condominio","comunicados"] },
+            "description": "Exige role SINDICO."
+          }
+        },
+        {
+          "name": "Publicar Comunicado para Bloco",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Aviso Bloco A\",\n  \"conteudo\": \"Haverá vistoria nos apartamentos do Bloco A na próxima semana.\",\n  \"visibilidade\": \"BLOCO_ESPECIFICO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["titulo", "conteudo", "visibilidade"],
+                    "properties": {
+                      "titulo":       { "type": "string", "maxLength": 150 },
+                      "conteudo":     { "type": "string" },
+                      "visibilidade": { "type": "string", "enum": ["TODOS","PROPRIETARIOS","RESIDENTES","BLOCO_ESPECIFICO"] }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/condominio/comunicados/bloco/A", "host": ["{{baseUrl}}"], "path": ["api","condominio","comunicados","bloco","A"] },
+            "description": "Substitua 'A' pelo bloco desejado. Exige role SINDICO."
+          }
+        },
+        {
+          "name": "Listar Comunicados",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/condominio/comunicados?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","condominio","comunicados"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar Comunicado por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/comunicados/{{comunicadoId}}", "host": ["{{baseUrl}}"], "path": ["api","condominio","comunicados","{{comunicadoId}}"] }
+          }
+        },
+        {
+          "name": "Remover Comunicado",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/condominio/comunicados/{{comunicadoId}}", "host": ["{{baseUrl}}"], "path": ["api","condominio","comunicados","{{comunicadoId}}"] },
+            "description": "Exige ADMIN ou SINDICO."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Portaria - Encomendas",
+      "item": [
+        {
+          "name": "Registrar Encomenda",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": \"{{unidadeId}}\",\n  \"tipo\": \"MEDIO_PRAZO\",\n  \"descricao\": \"Caixa Amazon\",\n  \"codigoRastreio\": \"BR123456789\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["unidadeId", "tipo"],
+                    "properties": {
+                      "unidadeId":      { "type": "string", "format": "uuid" },
+                      "tipo":           { "type": "string", "enum": ["CURTO_PRAZO","MEDIO_PRAZO","LONGO_PRAZO"] },
+                      "descricao":      { "type": "string", "maxLength": 500 },
+                      "codigoRastreio": { "type": "string", "maxLength": 100 }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/portaria/encomendas", "host": ["{{baseUrl}}"], "path": ["api","portaria","encomendas"] },
+            "description": "tipo: CURTO_PRAZO (iFood/2h TTL Redis), MEDIO_PRAZO (Amazon/7d), LONGO_PRAZO (Shopee/30d). Exige PORTEIRO."
+          }
+        },
+        {
+          "name": "Confirmar Retirada",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"retiradoPorPessoaId\": \"{{pessoaId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["retiradoPorPessoaId"],
+                    "properties": {
+                      "retiradoPorPessoaId": { "type": "string", "format": "uuid" }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/portaria/encomendas/{{encomendaId}}/retirada", "host": ["{{baseUrl}}"], "path": ["api","portaria","encomendas","{{encomendaId}}","retirada"] },
+            "description": "retiradoPorPessoaId é o pessoaId (condomínio), não o credencialId. Exige PORTEIRO."
+          }
+        },
+        {
+          "name": "Listar Encomendas Pendentes por Unidade",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/portaria/encomendas?unidadeId={{unidadeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","portaria","encomendas"],
+              "query": [{ "key": "unidadeId", "value": "{{unidadeId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Buscar Encomenda por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/portaria/encomendas/{{encomendaId}}", "host": ["{{baseUrl}}"], "path": ["api","portaria","encomendas","{{encomendaId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Portaria - Visitantes",
+      "item": [
+        {
+          "name": "Autorizar Visitante",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Maria Silva\",\n  \"documento\": \"12345678900\",\n  \"telefone\": \"(21) 99999-1111\",\n  \"tipo\": \"VISITANTE\",\n  \"unidadeId\": \"{{unidadeId}}\",\n  \"validadeInicio\": \"2026-06-25T14:00:00\",\n  \"validadeFim\": \"2026-06-25T20:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["nome", "tipo", "unidadeId", "validadeInicio", "validadeFim"],
+                    "properties": {
+                      "nome":           { "type": "string", "maxLength": 200 },
+                      "documento":      { "type": "string", "maxLength": 20 },
+                      "telefone":       { "type": "string", "maxLength": 20 },
+                      "tipo":           { "type": "string", "enum": ["SOCIAL","VISITANTE","PRESTADOR"] },
+                      "unidadeId":      { "type": "string", "format": "uuid" },
+                      "validadeInicio": { "type": "string", "format": "date-time" },
+                      "validadeFim":    { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/portaria/visitantes", "host": ["{{baseUrl}}"], "path": ["api","portaria","visitantes"] },
+            "description": "tipo: SOCIAL, VISITANTE, PRESTADOR. PRESTADOR exige autorização do SINDICO internamente."
+          }
+        },
+        {
+          "name": "Listar Visitantes por Unidade",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/portaria/visitantes?unidadeId={{unidadeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","portaria","visitantes"],
+              "query": [{ "key": "unidadeId", "value": "{{unidadeId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Encerrar Autorização de Visitante",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/portaria/visitantes/{{visitanteId}}/encerrar", "host": ["{{baseUrl}}"], "path": ["api","portaria","visitantes","{{visitanteId}}","encerrar"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Portaria - Acessos",
+      "item": [
+        {
+          "name": "Registrar Entrada de Morador",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"moradorId\": \"{{pessoaId}}\",\n  \"unidadeId\": \"{{unidadeId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["moradorId", "unidadeId"],
+                    "properties": {
+                      "moradorId":    { "type": "string", "format": "uuid" },
+                      "unidadeId":    { "type": "string", "format": "uuid" },
+                      "veiculoPlaca": { "type": "string", "pattern": "^[A-Z0-9]{7}$" },
+                      "observacoes":  { "type": "string", "maxLength": 500 }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/portaria/acessos/entrada/morador", "host": ["{{baseUrl}}"], "path": ["api","portaria","acessos","entrada","morador"] },
+            "description": "Exige PORTEIRO."
+          }
+        },
+        {
+          "name": "Registrar Entrada de Visitante",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"visitanteId\": \"{{visitanteId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["visitanteId"],
+                    "properties": {
+                      "visitanteId": { "type": "string", "format": "uuid" },
+                      "observacoes": { "type": "string", "maxLength": 500 }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/portaria/acessos/entrada/visitante", "host": ["{{baseUrl}}"], "path": ["api","portaria","acessos","entrada","visitante"] },
+            "description": "Visitante precisa ter autorização ativa. Exige PORTEIRO."
+          }
+        },
+        {
+          "name": "Registrar Saída",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipoPessoa\": \"MORADOR\",\n  \"pessoaId\": \"{{pessoaId}}\",\n  \"unidadeId\": \"{{unidadeId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "required": ["tipoPessoa", "pessoaId"],
+                    "properties": {
+                      "tipoPessoa":   { "type": "string", "enum": ["MORADOR","VISITANTE","FUNCIONARIO","PRESTADOR"] },
+                      "pessoaId":     { "type": "string", "format": "uuid" },
+                      "unidadeId":    { "type": "string", "format": "uuid" },
+                      "veiculoPlaca": { "type": "string" },
+                      "observacoes":  { "type": "string", "maxLength": 500 }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/portaria/acessos/saida", "host": ["{{baseUrl}}"], "path": ["api","portaria","acessos","saida"] },
+            "description": "Exige PORTEIRO."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Notificação",
+      "item": [
+        {
+          "name": "Listar Minhas Notificações",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/notificacao/notificacoes/minhas", "host": ["{{baseUrl}}"], "path": ["api","notificacao","notificacoes","minhas"] },
+            "description": "Retorna as notificações do usuário logado (identificado pelo X-User-Id do JWT)."
+          }
+        },
+        {
+          "name": "Retentar Envio de Notificação",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/notificacao/notificacoes/{{notificacaoId}}/retry", "host": ["{{baseUrl}}"], "path": ["api","notificacao","notificacoes","{{notificacaoId}}","retry"] },
+            "description": "Exige ADMIN ou SINDICO."
+          }
+        },
+        {
+          "name": "Listar Minhas Preferências",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/notificacao/notificacoes/preferencias", "host": ["{{baseUrl}}"], "path": ["api","notificacao","notificacoes","preferencias"] }
+          }
+        },
+        {
+          "name": "Atualizar Preferência",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipoEvento\": \"RESERVA_CONFIRMADA\",\n  \"canal\": \"IN_APP\",\n  \"ativa\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "tipoEvento": { "type": "string", "enum": ["COMUNICADO_PUBLICADO","MULTA_APLICADA","ENCOMENDA_RECEBIDA","RESERVA_CONFIRMADA"] },
+                      "canal":      { "type": "string", "enum": ["EMAIL","PUSH","WHATSAPP","IN_APP"] },
+                      "ativa":      { "type": "boolean" }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/notificacao/notificacoes/preferencias", "host": ["{{baseUrl}}"], "path": ["api","notificacao","notificacoes","preferencias"] },
+            "description": "Upsert por pessoaId (do JWT) + tipoEvento + canal."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Auditoria",
+      "item": [
+        {
+          "name": "Listar Registros de Auditoria",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/auditoria/registros?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","auditoria","registros"],
+              "query": [
+                { "key": "tipoEvento", "value": "MULTA_APLICADA", "disabled": true },
+                { "key": "page",       "value": "0" },
+                { "key": "size",       "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Histórico de Entidade",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/auditoria/registros/historico?tipoEntidade=Multa&idEntidade={{multaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","auditoria","registros","historico"],
+              "query": [
+                { "key": "tipoEntidade", "value": "Multa" },
+                { "key": "idEntidade",   "value": "{{multaId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar Anomalias",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/auditoria/anomalias?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","auditoria","anomalias"],
+              "query": [
+                { "key": "status", "value": "ABERTA", "disabled": true },
+                { "key": "page",   "value": "0" },
+                { "key": "size",   "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar Status de Anomalia",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"RECONHECIDA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json",
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "status": { "type": "string", "enum": ["ABERTA","RECONHECIDA","RESOLVIDA"] }
+                    }
+                  }
+                }
+              }
+            },
+            "url": { "raw": "{{baseUrl}}/api/auditoria/anomalias/{{anomaliaId}}/status", "host": ["{{baseUrl}}"], "path": ["api","auditoria","anomalias","{{anomaliaId}}","status"] },
+            "description": "Status: ABERTA, RECONHECIDA, RESOLVIDA."
+          }
+        }
+      ]
+    }
+
+  ]
+}

@@ -1,0 +1,31 @@
+name: Condo+ CI — API Gateway
+
+on:
+  push:
+    paths:
+      - 'infra/api-gateway/**'
+      - 'pom.xml'
+      - '.github/workflows/api-gateway.yml'
+  pull_request:
+    paths:
+      - 'infra/api-gateway/**'
+      - 'pom.xml'
+      - '.github/workflows/api-gateway.yml'
+
+jobs:
+  test:
+    name: Test API Gateway
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run Tests (api-gateway)
+        run: mvn test -pl infra/api-gateway

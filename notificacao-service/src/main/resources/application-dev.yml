@@ -1,0 +1,11 @@
+logging:
+  level:
+    io.r2dbc.postgresql.QUERY: DEBUG
+    org.springframework.r2dbc.core: TRACE
+    org.springframework.web.reactive: DEBUG
+
+condoplus:
+  notificacao:
+    canais:
+      email:
+        habilitado: false

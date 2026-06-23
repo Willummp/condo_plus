@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        POM filho do condominio-service.
+        Herda do parent POM do monorepo condo-plus.
+
+        ATENÇÃO: Este serviço usa Spring Data JDBC, NÃO JPA.
+        Trocar o starter para data-jpa quebraria toda a modelagem de aggregates.
+    -->
+    <parent>
+        <groupId>com.condoplus</groupId>
+        <artifactId>condo-plus</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>condominio-service</artifactId>
+    <name>condominio-service</name>
+    <description>Serviço de Estrutura e Convivência do Condo+ — Bounded contexts fundidos conscientemente</description>
+
+    <dependencies>
+
+        <!-- ═══════════════════════════════════════════════════
+             WEB LAYER — Spring MVC síncrono
+             NÃO usar WebFlux aqui; quem usa WebFlux é o notificacao-service
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- ═══════════════════════════════════════════════════
+             PERSISTÊNCIA — Spring Data JDBC (NÃO JPA!)
+             Impõe save() explícito, modela aggregates corretamente
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ═══════════════════════════════════════════════════
+             SECURITY — para @PreAuthorize e leitura de headers JWT
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- ═══════════════════════════════════════════════════
+             SERVICE DISCOVERY — registra no Eureka
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <!-- ═══════════════════════════════════════════════════
+             LOAD BALANCER — resolve lb://iam-service via Eureka
+             Necessário para chamadas REST ao iam-service
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+
+        <!-- ═══════════════════════════════════════════════════
+             CIRCUIT BREAKER — Resilience4j
+             Protege chamada ao iam-service no cadastro de Pessoa (TP1)
+             Por que Resilience4j e não Hystrix?
+             Hystrix está em modo manutenção desde 2018.
+             Resilience4j é a sucessora natural para Java 8+.
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+        </dependency>
+
+        <!-- ═══════════════════════════════════════════════════
+             VALIDATION — @Valid, @NotBlank, @Email nos DTOs
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- ═══════════════════════════════════════════════════
+             ACTUATOR — /actuator/health, /actuator/metrics (TP2: Prometheus)
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- ═══════════════════════════════════════════════════
+             FLYWAY — migrations versionadas do banco
+             Gerencia o schema condominio no PostgreSQL
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- ═══════════════════════════════════════════════════
+             LOMBOK — reduz boilerplate em entidades e services
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <!-- ═══════════════════════════════════════════════════
+             REATIVIDADE (TP2)
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <!-- ═══════════════════════════════════════════════════
+             KAFKA MENSAGERIA ASSÍNCRONA (TP2)
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
+        <!-- ═══════════════════════════════════════════════════
+             TESTES & TESTCONTAINERS
+             ═══════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>kafka</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <!-- Permite que o Mockito/ByteBuddy funcione no Java 25 (LTS instalado pelo usuário) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+                </configuration>
+            </plugin>
+            <!-- Garante que o Lombok seja processado corretamente durante a compilação -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
