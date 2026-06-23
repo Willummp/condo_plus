@@ -36,7 +36,7 @@ class PessoaServiceTest {
     @Test
     @DisplayName("Deve cadastrar uma pessoa com sucesso quando o documento é único e o IAM responde com sucesso")
     void cadastrarPessoaSucesso() {
-        // Arrange
+
         NovaPessoaRequest request = new NovaPessoaRequest(
                 "Lucas Ferreira",
                 "lucas@email.com",
@@ -63,10 +63,8 @@ class PessoaServiceTest {
         when(iamClient.criarCredencial(any())).thenReturn(Mono.just(iamResponse));
         when(pessoaRepository.save(any(Pessoa.class))).thenReturn(mockPessoaSalva);
 
-        // Act
         PessoaResponse response = pessoaService.cadastrar(request);
 
-        // Assert
         assertNotNull(response);
         assertEquals(mockPessoaSalva.getId(), response.id());
         assertEquals(generatedCredencialId, response.credencialId());
@@ -79,7 +77,7 @@ class PessoaServiceTest {
     @Test
     @DisplayName("Deve lançar DocumentoJaExisteException quando o documento (CPF) já estiver cadastrado")
     void cadastrarPessoaFalhaCpfExistente() {
-        // Arrange
+
         NovaPessoaRequest request = new NovaPessoaRequest(
                 "Lucas Ferreira",
                 "lucas@email.com",
@@ -92,7 +90,6 @@ class PessoaServiceTest {
 
         when(pessoaRepository.existsByDocumento(request.documento())).thenReturn(true);
 
-        // Act & Assert
         assertThrows(DocumentoJaExisteException.class, () -> pessoaService.cadastrar(request));
         verify(pessoaRepository, times(1)).existsByDocumento(request.documento());
         verifyNoInteractions(iamClient);
@@ -102,7 +99,7 @@ class PessoaServiceTest {
     @Test
     @DisplayName("Deve falhar e repassar o erro se o IamClient falhar (simulando Circuit Breaker ativado)")
     void cadastrarPessoaFalhaIamIndisponivel() {
-        // Arrange
+
         NovaPessoaRequest request = new NovaPessoaRequest(
                 "Lucas Ferreira",
                 "lucas@email.com",
@@ -118,7 +115,6 @@ class PessoaServiceTest {
         RuntimeException iamException = new RuntimeException("Serviço de Autenticação (IAM) temporariamente indisponível.");
         when(iamClient.criarCredencial(any())).thenReturn(Mono.error(iamException));
 
-        // Act & Assert
         RuntimeException thrown = assertThrows(RuntimeException.class, () -> pessoaService.cadastrar(request));
         assertTrue(thrown.getMessage().contains("Falha no cadastro"));
         

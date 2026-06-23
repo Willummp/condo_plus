@@ -23,9 +23,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
-/**
- * Serviço responsável pela publicação, remoção e listagem de Comunicados do condomínio.
- */
 @Service
 @Slf4j
 public class ComunicadoService {
@@ -47,20 +44,7 @@ public class ComunicadoService {
                 .register(meterRegistry);
     }
 
-    /**
-     * Publica um comunicado geral ou segmentado (exceto para bloco específico) na base de dados.
-     * 
-     * <p>Anotações do método:
-     * <ul>
-     *   <li>{@code @Transactional} — Abre uma transação comum de escrita (READ COMMITTED) para persistência.</li>
-     * </ul>
-     * 
-     * @param req DTO contendo o título, conteúdo e o público-alvo do comunicado.
-     * @param autorId ID único (UUID) do autor do comunicado (ex: síndico).
-     * @return ComunicadoResponse contendo os dados do comunicado cadastrado.
-     * @throws PessoaNaoEncontradaException se o autor especificado não for localizado.
-     * @throws IllegalArgumentException se o público-alvo for BLOCO_ESPECIFICO sem passar pela rota especializada.
-     */
+    
     @Transactional
     public ComunicadoResponse publicar(NovoComunicadoRequest req, UUID autorId) {
         log.info("Publicando comunicado: titulo={}, autorId={}", req.titulo(), autorId);
@@ -96,21 +80,7 @@ public class ComunicadoService {
         return ComunicadoResponse.fromEntity(salvo);
     }
 
-    /**
-     * Publica um comunicado destinado a um bloco residencial específico.
-     * 
-     * <p>Anotações do método:
-     * <ul>
-     *   <li>{@code @Transactional} — Abre uma transação de escrita (READ COMMITTED) para persistência segura.</li>
-     * </ul>
-     * 
-     * @param req DTO contendo as informações de título e conteúdo do comunicado.
-     * @param autorId ID único (UUID) do autor da publicação.
-     * @param bloco String contendo o identificador do bloco alvo (ex: "A", "B").
-     * @return ComunicadoResponse contendo o comunicado criado com escopo específico de bloco.
-     * @throws PessoaNaoEncontradaException se o autor especificado não for localizado.
-     * @throws IllegalArgumentException se o bloco informado for nulo ou vazio.
-     */
+    
     @Transactional
     public ComunicadoResponse publicarParaBloco(NovoComunicadoRequest req, UUID autorId, String bloco) {
         log.info("Publicando comunicado para bloco: titulo={}, bloco={}, autorId={}", req.titulo(), bloco, autorId);
@@ -147,18 +117,7 @@ public class ComunicadoService {
         return ComunicadoResponse.fromEntity(salvo);
     }
 
-    /**
-     * Busca um comunicado pelo seu ID único na base de dados.
-     * 
-     * <p>Anotações do método:
-     * <ul>
-     *   <li>{@code @Transactional(readOnly = true)} — Otimiza a consulta ao banco de dados com transação de leitura.</li>
-     * </ul>
-     * 
-     * @param id ID único do comunicado.
-     * @return ComunicadoResponse contendo os dados do comunicado encontrado.
-     * @throws RuntimeException se o comunicado não for localizado.
-     */
+    
     @Transactional(readOnly = true)
     public ComunicadoResponse buscarPorId(UUID id) {
         return comunicadoRepository.findById(id)
@@ -166,18 +125,7 @@ public class ComunicadoService {
                 .orElseThrow(() -> new RuntimeException("Comunicado não encontrado com o ID: " + id));
     }
 
-    /**
-     * Lista todos os comunicados cadastrados de forma paginada e ordenada por data decrescente.
-     * 
-     * <p>Anotações do método:
-     * <ul>
-     *   <li>{@code @Transactional(readOnly = true)} — Otimiza o acesso a dados de leitura.</li>
-     * </ul>
-     * 
-     * @param page Número da página a ser retornada (0-indexada).
-     * @param size Quantidade de elementos por página.
-     * @return Lista com os DTOs dos comunicados recentes encontrados.
-     */
+    
     @Transactional(readOnly = true)
     public List<ComunicadoResponse> listarTodos(int page, int size) {
         int offset = page * size;
@@ -186,17 +134,7 @@ public class ComunicadoService {
                 .toList();
     }
 
-    /**
-     * Filtra e lista comunicados com base na sua classificação de público-alvo.
-     * 
-     * <p>Anotações do método:
-     * <ul>
-     *   <li>{@code @Transactional(readOnly = true)} — Otimiza o acesso a dados de leitura.</li>
-     * </ul>
-     * 
-     * @param publicoAlvo Enum especificando a classificação (ex: MORADORES, PROPRIETARIOS).
-     * @return Lista contendo os DTOs dos comunicados que coincidem com a visibilidade informada.
-     */
+    
     @Transactional(readOnly = true)
     public List<ComunicadoResponse> listarPorPublicoAlvo(PublicoAlvo publicoAlvo) {
         return comunicadoRepository.findByPublicoAlvo(publicoAlvo).stream()
@@ -204,17 +142,7 @@ public class ComunicadoService {
                 .toList();
     }
 
-    /**
-     * Exclui permanentemente um comunicado do sistema.
-     * 
-     * <p>Anotações do método:
-     * <ul>
-     *   <li>{@code @Transactional} — Abre uma transação comum de modificação de dados.</li>
-     * </ul>
-     * 
-     * @param id ID único do comunicado que será removido.
-     * @throws RuntimeException se o comunicado especificado não existir na base.
-     */
+    
     @Transactional
     public void remover(UUID id) {
         log.info("Removendo comunicado: {}", id);

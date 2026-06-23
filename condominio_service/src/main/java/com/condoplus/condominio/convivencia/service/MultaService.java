@@ -24,9 +24,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
-/**
- * Serviço responsável por gerenciar a aplicação, atualização de status e listagem de Multas do condomínio.
- */
 @Service
 @Slf4j
 public class MultaService {
@@ -51,20 +48,7 @@ public class MultaService {
                 .register(meterRegistry);
     }
 
-    /**
-     * Aplica uma nova multa a uma unidade condominial.
-     * 
-     * <p>Anotações do método:
-     * <ul>
-     *   <li>{@code @Transactional} — Abre uma transação de escrita (READ COMMITTED) para persistência segura da multa.</li>
-     * </ul>
-     * 
-     * @param req DTO contendo o ID da unidade, valor, motivo, categoria e anexo da evidência da multa.
-     * @param aplicadorId ID único (UUID) do autor da aplicação (geralmente o síndico).
-     * @return MultaResponse contendo a multa criada.
-     * @throws UnidadeNaoEncontradaException se a unidade de destino não existir.
-     * @throws PessoaNaoEncontradaException se o aplicador da multa não for localizado.
-     */
+    
     @Transactional
     public MultaResponse aplicar(NovaMultaRequest req, UUID aplicadorId) {
         log.info("Aplicando multa: unidadeId={}, valor={}, aplicadorId={}", req.unidadeId(), req.valor(), aplicadorId);
@@ -106,18 +90,7 @@ public class MultaService {
         return MultaResponse.fromEntity(salva);
     }
 
-    /**
-     * Busca os dados de uma multa específica utilizando seu ID único.
-     * 
-     * <p>Anotações do método:
-     * <ul>
-     *   <li>{@code @Transactional(readOnly = true)} — Habilita otimizações de leitura no banco.</li>
-     * </ul>
-     * 
-     * @param id ID único da multa.
-     * @return MultaResponse contendo os dados correspondentes.
-     * @throws RuntimeException se a multa especificada não for localizada.
-     */
+    
     @Transactional(readOnly = true)
     public MultaResponse buscarPorId(UUID id) {
         return multaRepository.findById(id)
@@ -125,16 +98,7 @@ public class MultaService {
                 .orElseThrow(() -> new RuntimeException("Multa não encontrada com o ID: " + id));
     }
 
-    /**
-     * Lista todas as multas cadastradas no condomínio.
-     * 
-     * <p>Anotações do método:
-     * <ul>
-     *   <li>{@code @Transactional(readOnly = true)} — Habilita otimizações de leitura no banco.</li>
-     * </ul>
-     * 
-     * @return Lista contendo os DTOs de todas as multas encontradas.
-     */
+    
     @Transactional(readOnly = true)
     public List<MultaResponse> listarTodas() {
         return StreamSupport.stream(multaRepository.findAll().spliterator(), false)
@@ -142,19 +106,7 @@ public class MultaService {
                 .toList();
     }
 
-    /**
-     * Filtra e lista multas associadas a uma unidade específica, permitindo filtro adicional por status.
-     * 
-     * <p>Anotações do método:
-     * <ul>
-     *   <li>{@code @Transactional(readOnly = true)} — Habilita otimizações de leitura no banco.</li>
-     * </ul>
-     * 
-     * @param unidadeId ID da unidade alvo da consulta.
-     * @param status Status da multa para filtro (ex: PENDENTE, PAGA). Se nulo, retorna todas da unidade.
-     * @return Lista com os DTOs das multas filtradas.
-     * @throws UnidadeNaoEncontradaException se a unidade de destino não for localizada.
-     */
+    
     @Transactional(readOnly = true)
     public List<MultaResponse> listarPorUnidade(UUID unidadeId, StatusMulta status) {
         if (!unidadeRepository.existsById(unidadeId)) {
@@ -170,19 +122,7 @@ public class MultaService {
                 .toList();
     }
 
-    /**
-     * Atualiza o status de uma multa específica (ex: marcar como PAGA ou CANCELADA).
-     * 
-     * <p>Anotações do método:
-     * <ul>
-     *   <li>{@code @Transactional} — Abre uma transação comum de escrita.</li>
-     * </ul>
-     * 
-     * @param id ID único da multa que sofrerá alteração.
-     * @param status Novo status a ser atribuído à multa.
-     * @return MultaResponse contendo a multa atualizada.
-     * @throws RuntimeException se a multa especificada não for localizada.
-     */
+    
     @Transactional
     public MultaResponse atualizarStatus(UUID id, StatusMulta status) {
         log.info("Atualizando status da multa: id={}, novoStatus={}", id, status);

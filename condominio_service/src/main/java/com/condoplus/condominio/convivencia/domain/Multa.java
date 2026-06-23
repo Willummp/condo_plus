@@ -15,17 +15,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Entidade que representa uma Multa aplicada a uma Unidade no condomínio.
- * 
- * <p>Anotações da classe:
- * <ul>
- *   <li>{@code @Table(schema = "condominio", value = "multa")} — Mapeia a classe para a tabela {@code multa} do schema {@code condominio}.</li>
- *   <li>{@code @Getter} — Gera automaticamente os métodos getters pelo Lombok.</li>
- *   <li>{@code @Setter} — Gera automaticamente os métodos setters pelo Lombok.</li>
- *   <li>{@code @NoArgsConstructor} — Gera o construtor padrão vazio pelo Lombok.</li>
- * </ul>
- */
 @Table(schema = "condominio", value = "multa")
 @Getter
 @Setter

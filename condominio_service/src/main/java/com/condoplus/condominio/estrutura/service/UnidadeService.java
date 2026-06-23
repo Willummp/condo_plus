@@ -18,9 +18,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
-/**
- * Serviço responsável por encapsular a lógica de negócio de Unidades e suas Vinculações.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j

@@ -10,17 +10,6 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-/**
- * Entidade que representa uma Área Comum (ex: piscina, churrasqueira) no contexto de Convivência.
- * 
- * <p>Anotações da classe:
- * <ul>
- *   <li>{@code @Table(schema = "condominio", value = "area_comum")} — Mapeia a classe para a tabela {@code area_comum} dentro do schema {@code condominio} no PostgreSQL.</li>
- *   <li>{@code @Getter} — Gera automaticamente os métodos getters para todos os campos pelo Lombok.</li>
- *   <li>{@code @Setter} — Gera automaticamente os métodos setters para todos os campos pelo Lombok.</li>
- *   <li>{@code @NoArgsConstructor} — Gera automaticamente um construtor sem argumentos exigido pelo framework.</li>
- * </ul>
- */
 @Table(schema = "condominio", value = "area_comum")
 @Getter
 @Setter
@@ -36,10 +25,7 @@ public class AreaComum {
     @Column("capacidade_maxima")
     private Integer capacidadeMaxima;
 
-    /**
-     * Valor cobrado para a realização da reserva da área comum. 
-     * Pode ser {@code null} se o agendamento da área for gratuito.
-     */
+    
     @Column("valor_reserva")
     private BigDecimal valorReserva;
 

@@ -15,19 +15,6 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Tratamento global de exceções — padrão ProblemDetail (RFC 7807).
- *
- * <p>Todos os erros retornam no formato:
- * <pre>
- * {
- *   "type": "https://condoplus.local/errors/...",
- *   "title": "...",
- *   "status": 4xx,
- *   "detail": "..."
- * }
- * </pre>
- */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
@@ -68,10 +55,7 @@ public class GlobalExceptionHandler {
                 "Área comum indisponível", "/errors/area-indisponivel");
     }
 
-    /**
-     * Concorrência otimista (@Version) ou SERIALIZABLE do PostgreSQL.
-     * O cliente deve tentar novamente.
-     */
+    
     @ExceptionHandler({ConcurrencyFailureException.class, OptimisticLockingFailureException.class})
     public ResponseEntity<ProblemDetail> handleConcorrencia(Exception ex) {
         log.info("Conflito de concorrência detectado. message={}", ex.getMessage());
@@ -80,7 +64,7 @@ public class GlobalExceptionHandler {
                 "Conflito de concorrência", "/errors/concorrencia");
     }
 
-    /** Erros de validação (@Valid nos DTOs). Retorna campo → mensagem. */
+    
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ProblemDetail> handleValidacao(MethodArgumentNotValidException ex) {
         Map<String, String> erros = new HashMap<>();
@@ -90,7 +74,7 @@ public class GlobalExceptionHandler {
         ProblemDetail p = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST, "Dados de entrada inválidos");
         p.setTitle("Validação falhou");
-        p.setType(URI.create("https://condoplus.local/errors/validacao"));
+        p.setType(URI.create("https:
         p.setProperty("erros", erros);
         return ResponseEntity.badRequest().body(p);
     }
@@ -111,7 +95,7 @@ public class GlobalExceptionHandler {
                                                   String title, String typePath) {
         ProblemDetail p = ProblemDetail.forStatusAndDetail(status, detail);
         p.setTitle(title);
-        p.setType(URI.create("https://condoplus.local" + typePath));
+        p.setType(URI.create("https:
         return ResponseEntity.status(status).body(p);
     }
 }
