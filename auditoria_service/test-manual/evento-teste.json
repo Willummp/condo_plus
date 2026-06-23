@@ -1,0 +1,9 @@
+﻿{
+  "eventId": "evt-teste-001",
+  "correlationId": "corr-abc-123",
+  "timestamp": "2026-06-16T05:00:00Z",
+  "tipoEvento": "MULTA_APLICADA",
+  "servicoOrigem": "condominio-service",
+  "entidadeAfetada": { "tipo": "Multa", "id": "multa-42" },
+  "payload": { "valor": 150.0, "motivo": "barulho apos 22h" }
+}

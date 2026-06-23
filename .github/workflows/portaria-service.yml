@@ -1,0 +1,32 @@
+name: Condo+ CI — Portaria Service
+
+on:
+  push:
+    paths:
+      - 'portaria-service/**'
+      - 'pom.xml'
+      - '.github/workflows/portaria-service.yml'
+  pull_request:
+    paths:
+      - 'portaria-service/**'
+      - 'pom.xml'
+      - '.github/workflows/portaria-service.yml'
+
+jobs:
+  test:
+    name: Test Portaria Service
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run Tests (portaria-service)
+        run: mvn verify -pl portaria-service

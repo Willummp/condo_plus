@@ -1,0 +1,61 @@
+# CI do auditoria-service.
+#
+# Escopo: este workflow cobre apenas o auditoria-service. O monorepo Condo+ tem
+# outros servicos; cada um pode ter seu proprio job/workflow. Isolar por servico
+# faz o pipeline do auditoria ficar verde de forma independente do estado dos
+# demais (um servico de outro integrante que nao compile nao derruba este CI).
+#
+# O filtro de paths faz o workflow rodar so quando algo do auditoria_service
+# (ou o pom raiz, que e o parent dele) muda -- evita rodar a toa em mudancas de
+# outros servicos.
+
+name: auditoria-service CI
+
+on:
+  push:
+    branches: [ "**" ]
+    paths:
+      - "auditoria_service/**"
+      - "pom.xml"
+      - ".github/workflows/auditoria-service-ci.yml"
+  pull_request:
+    paths:
+      - "auditoria_service/**"
+      - "pom.xml"
+      - ".github/workflows/auditoria-service-ci.yml"
+
+jobs:
+  build-and-test:
+    # Ubuntu 22.04 fixo (nao ubuntu-latest): a versao do mongo embarcado
+    # (flapdoodle) usada nos testes nao resolve o pacote do MongoDB 7.0.4 no
+    # Ubuntu 24, falhando ao baixar o binario. O 22.04 e resolvido corretamente.
+    runs-on: ubuntu-22.04
+
+    steps:
+      # Baixa o repositorio inteiro: o auditoria_service/pom.xml herda do pom.xml
+      # raiz via <relativePath>../pom.xml</relativePath>, entao o parent precisa
+      # estar presente no checkout para o Maven resolver as versoes.
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      # JDK 21 (Temurin), mesma distribuicao usada no desenvolvimento. O cache
+      # do Maven acelera execucoes seguintes (nao rebaixa dependencias do zero).
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+          cache: "maven"
+
+       # Builda e testa SO o modulo auditoria-service.
+      # -f auditoria_service/pom.xml : aponta o Maven direto para o POM do
+      #                                modulo, ignorando o <modules> do POM raiz
+      #                                (que pode listar modulos de outros
+      #                                integrantes que nao existem nesta branch).
+      #                                O parent ainda e resolvido pelo
+      #                                <relativePath>../pom.xml</relativePath>
+      #                                declarado no POM filho.
+      # verify : roda compile + testes (surefire). O teste sobe MongoDB embarcado
+      #          (flapdoodle) em memoria, sem precisar de Docker no runner.
+      - name: Build e testes do auditoria-service
+        run: mvn -B -f auditoria_service/pom.xml verify

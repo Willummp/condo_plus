@@ -1,0 +1,75 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # Rotas para o condominio-service
+        - id: condominio-service
+          uri: lb://condominio-service
+          predicates:
+            - Path=/api/condominio/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthenticationFilter
+
+        # Rota publica IAM: login e refresh nao requerem JWT
+        - id: iam-service-auth
+          uri: lb://iam-service
+          predicates:
+            - Path=/api/iam/auth/**
+          filters:
+            - StripPrefix=2
+
+        # Rota protegida IAM: credenciais e demais endpoints requerem JWT
+        - id: iam-service-protected
+          uri: lb://iam-service
+          predicates:
+            - Path=/api/iam/**
+          filters:
+            - StripPrefix=2
+            - name: JwtAuthenticationFilter
+
+        # Rotas para o portaria-service
+        - id: portaria-service
+          uri: lb://portaria-service
+          predicates:
+            - Path=/api/portaria/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthenticationFilter
+
+        # Rotas para o auditoria-service
+        - id: auditoria-service
+          uri: lb://auditoria-service
+          predicates:
+            - Path=/api/auditoria/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthenticationFilter
+
+
+        # Rotas para o notificacao-service
+        - id: notificacao-service
+          uri: lb://notificacao-service
+          predicates:
+            - Path=/api/notificacao/**
+          filters:
+            - StripPrefix=2
+            - name: JwtAuthenticationFilter
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+
+# Chave secreta compartilhada para validação de assinatura de tokens JWT
+jwt:
+  secret: ${JWT_SECRET:CondoPlusSuperSecretKeyForJWTAuth2026!}

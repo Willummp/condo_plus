@@ -1,0 +1,38 @@
+version: '3.8'
+
+name: notificacao-service
+
+services:
+  notificacao-postgres:
+    image: postgres:16-alpine
+    container_name: condoplus-notificacao-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: condoplus
+      POSTGRES_USER: condominio_user
+      POSTGRES_PASSWORD: condominio_password
+    volumes:
+      - notificacao_postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  notificacao-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: condoplus-notificacao
+    ports:
+      - "8084:8084"
+    depends_on:
+      - notificacao-postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_R2DBC_URL=r2dbc:postgresql://notificacao-postgres:5432/condoplus?currentSchema=notificacao
+      - SPRING_FLYWAY_URL=jdbc:postgresql://notificacao-postgres:5432/condoplus?currentSchema=notificacao
+      - NOTIFICACAO_DB_USER=condominio_user
+      - NOTIFICACAO_DB_PASSWORD=condominio_password
+      - KAFKA_BOOTSTRAP=condoplus-kafka:9092
+      - EUREKA_URL=http://condoplus-eureka:8761/eureka
+
+volumes:
+  notificacao_postgres_data:

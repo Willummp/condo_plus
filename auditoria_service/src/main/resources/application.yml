@@ -1,0 +1,47 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: auditoria-service
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/condoplus_auditoria}
+      auto-index-creation: true
+
+  # ─── Kafka ──────────────────────────────────────────────────────
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+    consumer:
+      group-id: auditoria-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+eureka:
+  client:
+    enabled: true
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.uuid}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSS} %-5level [corrId=%X{correlationId:-}] [%thread] %logger{36} - %msg%n"
+  level:
+    root: INFO
+    com.condoplus.auditoria: DEBUG
+    org.springframework.data.mongodb.core: DEBUG
