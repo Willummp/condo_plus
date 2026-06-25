@@ -48,7 +48,12 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/info",
                                 "/actuator/metrics",
-                                "/actuator/prometheus"
+                                "/actuator/prometheus",
+                                // Paths que chegam via gateway com StripPrefix=1 (/api/auditoria/** → /auditoria/**)
+                                "/auditoria/actuator/health",
+                                "/auditoria/actuator/info",
+                                "/auditoria/actuator/metrics",
+                                "/auditoria/actuator/prometheus"
                         ).permitAll()
 
                         // REGRA ESPECIFICA PRIMEIRO: triar anomalia (mudar status) e acao de

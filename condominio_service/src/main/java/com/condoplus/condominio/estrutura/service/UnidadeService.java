@@ -6,6 +6,7 @@ import com.condoplus.condominio.estrutura.dto.NovaUnidadeRequest;
 import com.condoplus.condominio.estrutura.dto.NovaVinculacaoRequest;
 import com.condoplus.condominio.estrutura.dto.UnidadeResponse;
 import com.condoplus.condominio.estrutura.dto.VinculacaoResponse;
+import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import com.condoplus.condominio.estrutura.repository.UnidadeRepository;
 import com.condoplus.condominio.exception.UnidadeNaoEncontradaException;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
@@ -25,6 +27,7 @@ public class UnidadeService {
 
     private final UnidadeRepository unidadeRepository;
     private final EscopoDerivacaoService escopoDerivacaoService;
+    private final PessoaRepository pessoaRepository;
 
     @Transactional
     public UnidadeResponse criar(NovaUnidadeRequest req) {
@@ -109,6 +112,25 @@ public class UnidadeService {
         return unidade.getVinculacoes().stream()
                 .filter(v -> !apenasAtivas || v.isAtiva())
                 .map(VinculacaoResponse::fromEntity)
+                .toList();
+    }
+
+    /**
+     * Retorna os credencialIds (IAM) dos moradores ativos de uma unidade.
+     * Usado pelo notificacao-service via WebClient para fan-out de eventos.
+     */
+    @Transactional(readOnly = true)
+    public List<UUID> listarCredenciaisDosMoradoresAtivos(UUID unidadeId) {
+        Unidade unidade = unidadeRepository.findById(unidadeId)
+                .orElseThrow(() -> new UnidadeNaoEncontradaException(unidadeId));
+
+        return unidade.getVinculacoes().stream()
+                .filter(Vinculacao::isAtiva)
+                .map(v -> v.getPessoaId().getId())
+                .map(pessoaId -> pessoaRepository.findById(pessoaId).orElse(null))
+                .filter(Objects::nonNull)
+                .map(p -> p.getCredencialId())
+                .filter(Objects::nonNull)
                 .toList();
     }
 }

@@ -24,7 +24,7 @@ public class MultaController {
 
     
     @PostMapping
-    @PreAuthorize("hasRole('SINDICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SINDICO')")
     public ResponseEntity<MultaResponse> aplicar(
             @Valid @RequestBody NovaMultaRequest req,
             Authentication auth) {
@@ -35,7 +35,14 @@ public class MultaController {
                 .body(criada);
     }
 
-    
+
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<MultaResponse>> listarTodas() {
+        return ResponseEntity.ok(multaService.listarTodas());
+    }
+
+
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MultaResponse> buscarPorId(@PathVariable UUID id) {

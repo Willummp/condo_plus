@@ -59,7 +59,7 @@ Todos os serviços se registram no **Eureka** ao iniciar. A comunicação entre 
 | `JwtAuthenticationFilter` (customizado) | Valida assinatura HMAC-SHA256 e expiração do token **antes** de encaminhar para qualquer serviço; injeta `X-User-Id`, `X-User-Email` e `X-User-Roles` nos headers downstream |
 | `CorrelationGatewayFilter` | Gera ou propaga `X-Correlation-ID` em todas as requisições para rastreabilidade entre logs dos serviços |
 | Spring Cloud LoadBalancer | Balanceia chamadas para os nomes lógicos do Eureka (`lb://nome-servico`) |
-| StripPrefix | Remove prefixo da rota antes de encaminhar: `StripPrefix=1` para a maioria, `StripPrefix=2` para IAM e notificação (cujos controllers não têm o prefixo no path interno) |
+| StripPrefix | Remove prefixo da rota antes de encaminhar: `StripPrefix=1` para a maioria dos serviços, `StripPrefix=2` para IAM (cujo controller não tem prefixo no path interno) |
 
 **Tabela de roteamento:**
 
@@ -69,7 +69,7 @@ Todos os serviços se registram no **Eureka** ao iniciar. A comunicação entre 
 | `/api/portaria/**` | `lb://portaria-service` | 1 |
 | `/api/auditoria/**` | `lb://auditoria-service` | 1 |
 | `/api/iam/**` | `lb://iam-service` | 2 |
-| `/api/notificacao/**` | `lb://notificacao-service` | 2 |
+| `/api/notificacoes/**` | `lb://notificacao-service` | 1 |
 
 ---
 
@@ -178,14 +178,14 @@ O modelo adotado é **Autenticação Centralizada na Borda**:
 | `/api/condominio/unidades` | POST | SINDICO, ADMIN |
 | `/api/condominio/unidades/{id}/vinculacoes` | POST | SINDICO, ADMIN |
 | `/api/condominio/pessoas` | POST | SINDICO, ADMIN |
-| `/api/condominio/multas` | POST | **SINDICO** (exclusivo) |
-| `/api/condominio/comunicados` | POST | **SINDICO** (exclusivo) |
+| `/api/condominio/multas` | POST | ADMIN, SINDICO |
+| `/api/condominio/comunicados` | POST | ADMIN, SINDICO |
 | `/api/condominio/**` | GET | Qualquer autenticado |
 | `/api/iam/credenciais` | POST | ADMIN, SINDICO |
 | `/api/iam/credenciais/{id}/status` | PATCH | ADMIN |
 | `/api/portaria/**` | POST/PATCH | PORTEIRO |
-| `/api/notificacao/notificacoes/minhas` | GET | Qualquer autenticado |
-| `/api/notificacao/notificacoes/{id}/retry` | POST | ADMIN, SINDICO |
+| `/api/notificacoes/minhas` | GET | Qualquer autenticado |
+| `/api/notificacoes/{id}/retry` | POST | ADMIN, SINDICO |
 | `/api/auditoria/**` | GET | ADMIN, SINDICO |
 
 ---
@@ -243,10 +243,9 @@ Isso sobe os 12 containers na ordem correta:
 ```bash
 # Verificar status de todos os containers
 docker compose ps
-
-# Dashboard do Eureka — lista serviços registrados
-# Acesse http://localhost:8761 no navegador
 ```
+
+**Dashboard do Eureka:** abra `http://localhost:8761` no navegador. Você verá todos os serviços registrados com status `UP`. Aguarde ~30 segundos após o `docker compose up` para todos se registrarem.
 
 ### 4. Primeiro acesso
 
@@ -278,6 +277,25 @@ Importe o arquivo `postman/condoplus.postman_collection.json`. Ele contém todos
 docker compose down          # para containers (volumes preservados)
 docker compose down -v       # para containers e apaga todos os dados
 ```
+
+### 6. Frontend
+
+O frontend é um único arquivo HTML (`condo_plus_app.html`) que funciona como SPA. Basta abrir no navegador — não precisa de servidor nem build:
+
+1. Com todos os containers rodando, abra o arquivo `condo_plus_app.html` diretamente no navegador (duplo clique ou `File > Open`).
+2. Faça login com as credenciais do admin (`admin@condoplus.com` / `Admin@1234`) ou de qualquer usuário cadastrado.
+
+O frontend se comunica com o gateway em `http://localhost:8080`. Funcionalidades por perfil:
+
+| Perfil | Acesso |
+|---|---|
+| ADMIN | Tudo — pessoas, unidades, multas, comunicados, áreas, portaria, auditoria |
+| SINDICO | Gestão operacional — multas, comunicados, reservas, portaria |
+| PORTEIRO | Visitantes, encomendas e registro de entrada de moradores |
+| MORADOR | Dashboard pessoal, reservas de áreas comuns e notificações |
+| FUNCIONARIO | Dashboard pessoal e notificações |
+
+O token JWT é renovado automaticamente via refresh token — a sessão não expira enquanto o navegador estiver aberto.
 
 ---
 

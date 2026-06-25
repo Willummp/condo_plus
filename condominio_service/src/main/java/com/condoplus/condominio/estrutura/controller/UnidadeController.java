@@ -64,4 +64,14 @@ public class UnidadeController {
             @RequestParam(required = false, defaultValue = "false") boolean apenasAtivas) {
         return ResponseEntity.ok(unidadeService.listarVinculacoes(id, apenasAtivas));
     }
+
+    /**
+     * Retorna os credencialIds (IAM UUID) dos moradores ativos da unidade.
+     * Chamado internamente pelo notificacao-service via WebClient (service-to-service).
+     */
+    @GetMapping("/{id}/moradores/credenciais")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<UUID>> listarCredenciaisDosMoradores(@PathVariable UUID id) {
+        return ResponseEntity.ok(unidadeService.listarCredenciaisDosMoradoresAtivos(id));
+    }
 }
