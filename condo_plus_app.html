@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Condo+ Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#f1f5f9;color:#1e293b;height:100vh;overflow:hidden}
+:root{--accent:#1a237e;--accent-light:#e8eaf6;--accent-rgb:26,35,126}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%)}
+.login-card{background:#fff;border-radius:20px;padding:48px;width:420px;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.login-logo{text-align:center;margin-bottom:36px}
+.login-logo .logo-icon{width:72px;height:72px;background:#1a237e;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:34px}
+.login-logo h1{font-size:28px;font-weight:800;color:#1e293b}
+.login-logo p{color:#64748b;font-size:14px;margin-top:5px}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s,box-shadow .2s;background:#fafafa}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#1a237e;box-shadow:0 0 0 3px rgba(26,35,126,.1);background:#fff}
+.form-group textarea{resize:vertical;min-height:90px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{filter:brightness(1.12)}
+.btn-secondary{background:#f1f5f9;color:#475569;border:1.5px solid #e2e8f0}.btn-secondary:hover{background:#e2e8f0}
+.btn-danger{background:#fee2e2;color:#dc2626}.btn-danger:hover{background:#fecaca}
+.btn-full{width:100%;justify-content:center;padding:13px}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+
+/* APP LAYOUT */
+#app{display:none;height:100vh;flex-direction:row}
+#app.visible{display:flex}
+#sidebar{width:260px;background:#1e293b;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar-header{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sidebar-logo{display:flex;align-items:center;gap:12px}
+.sidebar-logo .icon{width:40px;height:40px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.sidebar-logo span{font-size:20px;font-weight:800;color:#fff}
+.sidebar-user{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sidebar-user .email{font-size:12px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.role-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;margin-top:6px;letter-spacing:.5px}
+nav{flex:1;padding:12px 0}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 20px;cursor:pointer;color:#94a3b8;font-size:13.5px;font-weight:500;transition:all .15s;border-left:3px solid transparent}
+.nav-item:hover{color:#e2e8f0;background:rgba(255,255,255,.05)}
+.nav-item.active{color:#fff;background:rgba(255,255,255,.08);border-left-color:var(--accent)}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.07)}
+.logout-btn{display:flex;align-items:center;gap:10px;color:#94a3b8;font-size:13px;cursor:pointer;padding:8px 0}
+.logout-btn:hover{color:#f87171}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#topbar h2{font-size:18px;font-weight:700;color:#1e293b}
+#topbar .topbar-right{display:flex;align-items:center;gap:12px}
+#content{flex:1;overflow-y:auto;padding:28px}
+
+/* CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f1f5f9}
+.stat-card .stat-icon{width:44px;height:44px;border-radius:12px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+.stat-card .stat-num{font-size:28px;font-weight:800;color:#1e293b}
+.stat-card .stat-label{font-size:12px;color:#94a3b8;margin-top:2px;font-weight:500}
+.card{background:#fff;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f1f5f9;margin-bottom:20px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.card-header h3{font-size:15px;font-weight:700;color:#1e293b}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #f1f5f9}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f8fafc;padding:11px 14px;text-align:left;font-weight:600;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #f1f5f9}
+td{padding:12px 14px;border-bottom:1px solid #f8fafc;color:#374151;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfc}
+.truncate{max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-blue{background:#dbeafe;color:#1d4ed8}.badge-green{background:#dcfce7;color:#16a34a}
+.badge-red{background:#fee2e2;color:#dc2626}.badge-yellow{background:#fef9c3;color:#a16207}
+.badge-purple{background:#f3e8ff;color:#7e22ce}.badge-gray{background:#f1f5f9;color:#64748b}
+.badge-orange{background:#fff7ed;color:#c2410c}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:18px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.modal-header{padding:22px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.modal-header h3{font-size:17px;font-weight:700}
+.modal-close{width:30px;height:30px;border-radius:8px;background:#f1f5f9;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#64748b}
+.modal-close:hover{background:#e2e8f0}
+.modal-body{padding:20px 24px 24px}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;padding-top:16px;border-top:1px solid #f1f5f9;margin-top:16px}
+
+/* TOASTS (bottom-right) */
+#toasts{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.15);font-size:13.5px;font-weight:500;min-width:260px;animation:toastIn .25s ease;border-left:4px solid #64748b;pointer-events:all}
+.toast.success{border-left-color:#16a34a}.toast.error{border-left-color:#dc2626}.toast.info{border-left-color:#1d4ed8}
+@keyframes toastIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes toastOut{to{transform:translateX(120px);opacity:0}}
+
+/* REQUEST LOGGER (bottom-left) */
+#req-log-container{position:fixed;bottom:16px;left:16px;z-index:9998;display:flex;flex-direction:column;align-items:flex-start;gap:0}
+#req-log-toggle{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#1e293b;color:#94a3b8;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:inherit;margin-bottom:6px;letter-spacing:.5px}
+#req-log-toggle:hover{background:#334155}
+#req-log-toggle .dot{width:7px;height:7px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#req-log-panel{width:380px;max-height:320px;background:#0f172a;border-radius:12px;overflow:hidden;border:1px solid #1e293b;display:none;flex-direction:column}
+#req-log-panel.open{display:flex}
+#req-log-header{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e293b}
+#req-log-header span{font-size:11px;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase}
+#req-log-header button{background:none;border:none;color:#475569;cursor:pointer;font-size:11px;font-family:inherit}
+#req-log-header button:hover{color:#94a3b8}
+#req-log-list{overflow-y:auto;flex:1}
+.req-entry{padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .1s}
+.req-entry:hover{background:rgba(255,255,255,.04)}
+.req-entry-top{display:flex;align-items:center;gap:8px}
+.req-method{font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;font-family:monospace;letter-spacing:.5px;flex-shrink:0}
+.m-GET{background:#1e3a5f;color:#60a5fa}.m-POST{background:#14532d;color:#4ade80}
+.m-PATCH{background:#451a03;color:#fb923c}.m-DELETE{background:#450a0a;color:#f87171}
+.m-PUT{background:#2e1065;color:#c084fc}
+.req-path{font-size:11px;font-family:monospace;color:#94a3b8;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.req-status{font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;flex-shrink:0}
+.req-status.ok{background:#14532d;color:#4ade80}.req-status.err{background:#450a0a;color:#f87171}.req-status.pending{background:#1e293b;color:#64748b}
+.req-time{font-size:9px;color:#475569;margin-left:auto}
+.req-details{padding:6px 14px 10px;background:rgba(0,0,0,.2);border-bottom:1px solid rgba(255,255,255,.04);display:none}
+.req-details.open{display:block}
+.req-detail-label{font-size:9px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-top:6px;margin-bottom:2px}
+.req-detail-val{font-size:10px;font-family:monospace;color:#64748b;word-break:break-all;line-height:1.5}
+
+/* REQUEST POPUP NOTIFICATIONS (bottom-left above the panel) */
+#req-popups{position:fixed;bottom:16px;right:16px;z-index:9997;display:flex;flex-direction:column-reverse;gap:6px;pointer-events:none;max-width:360px}
+.req-popup{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:#0f172a;border:1px solid #1e293b;box-shadow:0 4px 16px rgba(0,0,0,.4);animation:reqIn .2s ease;pointer-events:none;max-width:360px}
+@keyframes reqIn{from{transform:translateX(-80px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes reqOut{to{transform:translateX(-80px);opacity:0}}
+.req-popup .req-method{font-size:9px}
+.req-popup-path{font-size:11px;font-family:monospace;color:#94a3b8;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.req-popup-status{font-size:10px;font-weight:700}
+.req-popup-status.ok{color:#4ade80}.req-popup-status.err{color:#f87171}.req-popup-status.pending{color:#94a3b8}
+
+/* MISC */
+.empty-state{text-align:center;padding:60px 20px;color:#94a3b8}
+.empty-state .icon{font-size:48px;margin-bottom:16px}
+.empty-state p{font-size:14px}
+.error-state{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;color:#dc2626;font-size:13px;margin-bottom:16px}
+.loading{text-align:center;padding:40px;color:#94a3b8;font-size:14px}
+.search-bar{display:flex;gap:10px;margin-bottom:20px}
+.search-bar input{flex:1}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.section-header h2{font-size:20px;font-weight:700}
+.tabs{display:flex;gap:2px;background:#f1f5f9;border-radius:10px;padding:4px;margin-bottom:20px;width:fit-content}
+.tab{padding:7px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:#64748b;transition:all .15s}
+.tab.active{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.chip{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#f1f5f9;color:#475569}
+.api-hint{font-size:11px;color:#94a3b8;font-family:monospace;background:#f8fafc;padding:2px 7px;border-radius:5px}
+input[type=number]{-moz-appearance:textfield}
+
+/* ROLE COLORS */
+body.role-ADMIN    {--accent:#b71c1c;--accent-light:#ffebee}
+body.role-SINDICO  {--accent:#1565c0;--accent-light:#e3f2fd}
+body.role-PORTEIRO {--accent:#e65100;--accent-light:#fff3e0}
+body.role-MORADOR  {--accent:#2e7d32;--accent-light:#e8f5e9}
+body.role-FUNCIONARIO{--accent:#6a1b9a;--accent-light:#f3e5f5}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">🏢</div>
+      <h1>Condo+</h1>
+      <p>Sistema de Gestão de Condomínios</p>
+    </div>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="login-email" placeholder="seu@email.com" autofocus onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="login-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()">Entrar</button>
+    <div id="login-error" style="margin-top:14px;font-size:13px;color:#dc2626;text-align:center;display:none;background:#fff5f5;padding:10px;border-radius:8px;line-height:1.5"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><div class="icon">🏢</div><span>Condo+</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="email" id="sidebar-email">—</div>
+      <div id="sidebar-role-badge" class="role-badge">—</div>
+    </div>
+    <nav id="nav-menu"></nav>
+    <div class="sidebar-footer">
+      <div class="logout-btn" onclick="logout()"><span>🚪</span><span>Sair</span></div>
+    </div>
+  </aside>
+  <div id="main">
+    <div id="topbar">
+      <h2 id="topbar-title">Dashboard</h2>
+      <div class="topbar-right"><span class="api-hint">localhost:8080</span></div>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
+  <div class="modal" id="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-title">—</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- TOASTS (bottom-right) -->
+<div id="toasts"></div>
+
+<!-- REQUEST LOGGER (bottom-left) -->
+<div id="req-log-container">
+  <button id="req-log-toggle" onclick="toggleReqLog()">
+    <span class="dot"></span>
+    <span id="req-log-count">0 requests</span>
+    <span style="margin-left:4px;font-size:10px" id="req-log-arrow">▲</span>
+  </button>
+  <div id="req-log-panel">
+    <div id="req-log-header">
+      <span>Request Log</span>
+      <button onclick="clearReqLog()">Limpar</button>
+    </div>
+    <div id="req-log-list"></div>
+  </div>
+</div>
+<div id="req-popups"></div>
+
+<script>
+const GATEWAY = 'http://localhost:8080';
+let STATE = { token:null, refreshToken:null, role:null, email:null, sub:null };
+let _refreshing = false; // evita loop infinito de refresh
+
+// ══ REQUEST LOGGER ══════════════════════════════════════════════
+let reqCount = 0;
+let reqLogOpen = false;
+
+function toggleReqLog() {
+  reqLogOpen = !reqLogOpen;
+  document.getElementById('req-log-panel').classList.toggle('open', reqLogOpen);
+  document.getElementById('req-log-arrow').textContent = reqLogOpen ? '▼' : '▲';
+  // Shift popups up when panel is open
+  // popups ficam no canto direito — independentes do painel esquerdo
+}
+
+function clearReqLog() {
+  document.getElementById('req-log-list').innerHTML = '';
+  reqCount = 0;
+  document.getElementById('req-log-count').textContent = '0 requests';
+}
+
+function methodColor(m) {
+  return {GET:'m-GET',POST:'m-POST',PATCH:'m-PATCH',DELETE:'m-DELETE',PUT:'m-PUT'}[m]||'m-GET';
+}
+
+function logRequest(method, path, headers, body, status, responseData, ms) {
+  reqCount++;
+  document.getElementById('req-log-count').textContent = `${reqCount} request${reqCount>1?'s':''}`;
+
+  const id = 'req-' + reqCount;
+  const statusOk = status >= 200 && status < 300;
+  const statusClass = status === 0 ? 'pending' : statusOk ? 'ok' : 'err';
+  const statusLabel = status === 0 ? 'ERR' : status;
+
+  // Sanitize headers (truncate JWT)
+  const safeHeaders = {...headers};
+  if (safeHeaders['Authorization']) safeHeaders['Authorization'] = 'Bearer [JWT]';
+
+  const bodyStr = body ? JSON.stringify(body, null, 2) : '—';
+  const respStr = responseData ? JSON.stringify(responseData, null, 2).substring(0, 500) + (JSON.stringify(responseData).length > 500 ? '\n…' : '') : '—';
+
+  // Add to panel
+  const list = document.getElementById('req-log-list');
+  const entry = document.createElement('div');
+  entry.className = 'req-entry';
+  entry.id = id;
+  entry.innerHTML = `
+    <div class="req-entry-top" onclick="toggleReqDetail('${id}')">
+      <span class="req-method ${methodColor(method)}">${method}</span>
+      <span class="req-path" title="${path}">${path}</span>
+      <span class="req-status ${statusClass}">${statusLabel}</span>
+      <span class="req-time">${ms}ms</span>
+    </div>
+    <div class="req-details" id="${id}-detail">
+      <div class="req-detail-label">Path</div>
+      <div class="req-detail-val">${GATEWAY}${path}</div>
+      <div class="req-detail-label">Headers</div>
+      <div class="req-detail-val">${JSON.stringify(safeHeaders, null, 2)}</div>
+      ${body ? `<div class="req-detail-label">Body</div><div class="req-detail-val">${bodyStr}</div>` : ''}
+      <div class="req-detail-label">Response (${statusLabel})</div>
+      <div class="req-detail-val">${respStr}</div>
+    </div>`;
+  list.prepend(entry);
+
+  // Popup notification (bottom-left, slides in/out)
+  const popup = document.createElement('div');
+  popup.className = 'req-popup';
+  popup.innerHTML = `
+    <span class="req-method ${methodColor(method)}">${method}</span>
+    <span class="req-popup-path">${path}</span>
+    <span class="req-popup-status ${statusClass}">${statusLabel}</span>`;
+  const popupContainer = document.getElementById('req-popups');
+  popupContainer.appendChild(popup);
+  setTimeout(() => {
+    popup.style.animation = 'reqOut .2s ease forwards';
+    setTimeout(() => popup.remove(), 200);
+  }, 4000);
+}
+
+function toggleReqDetail(id) {
+  document.getElementById(id + '-detail').classList.toggle('open');
+}
+
+// ══ API ═════════════════════════════════════════════════════════
+async function api(method, path, body, _skipLog=false) {
+  const headers = {'Content-Type':'application/json'};
+  if (STATE.token) headers['Authorization'] = 'Bearer ' + STATE.token;
+  const t0 = Date.now();
+  try {
+    const res = await fetch(GATEWAY + path, {
+      method, headers, body: body ? JSON.stringify(body) : undefined
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch(_) { data = text || null; }
+    const ms = Date.now() - t0;
+
+    // ── Auto-refresh: token expirado → renova e repete a requisição ──
+    if (res.status === 401 && STATE.refreshToken && !_refreshing) {
+      const renewed = await doRefresh();
+      if (renewed) return api(method, path, body, _skipLog); // retry
+      // refresh falhou → força logout
+      toast('Sessão expirada. Faça login novamente.', 'error');
+      setTimeout(() => logout(), 1500);
+      return { ok:false, status:401, data };
+    }
+
+    if (!_skipLog) logRequest(method, path, headers, body||null, res.status, data, ms);
+    return { ok: res.ok, status: res.status, data };
+  } catch(e) {
+    const ms = Date.now() - t0;
+    if (!_skipLog) logRequest(method, path, headers, body||null, 0, e.message, ms);
+    return { ok:false, status:0, data: e.message };
+  }
+}
+
+// Chama /auth/refresh com o refreshToken atual; retorna true se ok
+async function doRefresh() {
+  if (_refreshing) return false;
+  _refreshing = true;
+  try {
+    const res = await fetch(GATEWAY + '/api/iam/auth/refresh', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + STATE.refreshToken, 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) { _refreshing = false; return false; }
+    const data = await res.json();
+    STATE.token = data.accessToken;
+    STATE.refreshToken = data.refreshToken || STATE.refreshToken;
+    _refreshing = false;
+    return true;
+  } catch(_) { _refreshing = false; return false; }
+}
+
+// ══ JWT ═════════════════════════════════════════════════════════
+function parseJWT(token) {
+  try {
+    const b64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(atob(b64));
+  } catch(_) { return null; }
+}
+
+// ══ LOGIN ═══════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha  = document.getElementById('login-senha').value;
+  const btn    = document.getElementById('login-btn');
+  const err    = document.getElementById('login-error');
+  err.style.display = 'none';
+
+  if (!email || !senha) {
+    err.textContent = 'Preencha e-mail e senha.';
+    err.style.display = 'block'; return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  const r = await api('POST', '/api/iam/auth/login', { email, senha });
+  btn.disabled = false; btn.textContent = 'Entrar';
+
+  if (!r.ok || !r.data?.accessToken) {
+    const msg = r.status === 0
+      ? 'Não foi possível conectar ao servidor.\nVerifique se os containers estão rodando (docker compose up).'
+      : r.data?.message || r.data?.detail || `Erro ${r.status}: credenciais inválidas.`;
+    err.innerHTML = msg.replace(/\n/g,'<br>');
+    err.style.display = 'block'; return;
+  }
+
+  STATE.token        = r.data.accessToken;
+  STATE.refreshToken = r.data.refreshToken || null;
+  const claims = parseJWT(STATE.token);
+  STATE.email = claims?.email || email;
+  STATE.role  = (claims?.roles || [])[0] || 'MORADOR';
+  STATE.sub   = claims?.sub || null; // credential UUID (para gerenciar no IAM)
+
+  startApp();
+}
+
+// ══ NAV ═════════════════════════════════════════════════════════
+const NAV = {
+  ADMIN:      [{s:'Dashboard',i:'📊'},{s:'Unidades',i:'🏠'},{s:'Pessoas',i:'👥'},{s:'Comunicados',i:'📣'},{s:'Multas',i:'⚠️'},{s:'Áreas Comuns',i:'🏊'},{s:'Reservas',i:'📅'},{s:'Funcionários',i:'💼'},{s:'Auditoria',i:'🔍'},{s:'Notificações',i:'🔔'}],
+  SINDICO:    [{s:'Dashboard',i:'📊'},{s:'Unidades',i:'🏠'},{s:'Pessoas',i:'👥'},{s:'Comunicados',i:'📣'},{s:'Multas',i:'⚠️'},{s:'Áreas Comuns',i:'🏊'},{s:'Reservas',i:'📅'},{s:'Funcionários',i:'💼'},{s:'Notificações',i:'🔔'}],
+  PORTEIRO:   [{s:'Dashboard',i:'📊'},{s:'Unidades',i:'🏠'},{s:'Portaria',i:'🚪'}],
+  MORADOR:    [{s:'Dashboard',i:'📊'},{s:'Comunicados',i:'📣'},{s:'Reservas',i:'📅'},{s:'Multas',i:'⚠️'},{s:'Notificações',i:'🔔'}],
+  FUNCIONARIO:[{s:'Dashboard',i:'📊'},{s:'Comunicados',i:'📣'},{s:'Notificações',i:'🔔'}],
+};
+
+function startApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  document.body.className = 'role-' + STATE.role;
+  document.getElementById('sidebar-email').textContent = STATE.email;
+  document.getElementById('sidebar-role-badge').textContent = STATE.role;
+  buildNav();
+  navigate('Dashboard');
+}
+
+function buildNav() {
+  const items = NAV[STATE.role] || NAV.MORADOR;
+  document.getElementById('nav-menu').innerHTML =
+    items.map(({s,i}) => `<div class="nav-item" data-section="${s}" onclick="navigate('${s}')"><span class="icon">${i}</span><span>${s}</span></div>`).join('');
+}
+
+function navigate(section) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.section === section));
+  document.getElementById('topbar-title').textContent = section;
+  document.getElementById('content').innerHTML = '<div class="loading">⏳ Carregando…</div>';
+  const fn = {
+    'Dashboard':renderDashboard, 'Unidades':renderUnidades, 'Pessoas':renderPessoas,
+    'Comunicados':renderComunicados, 'Multas':renderMultas, 'Áreas Comuns':renderAreasComuns,
+    'Reservas':renderReservas, 'Funcionários':renderFuncionarios,
+    'Auditoria':renderAuditoria, 'Portaria':renderPortaria, 'Notificações':renderNotificacoes
+  }[section];
+  if (fn) fn();
+  else document.getElementById('content').innerHTML = '<div class="empty-state"><div class="icon">🚧</div><p>Seção em construção</p></div>';
+}
+
+function logout() { location.reload(); }
+
+// ══ TOAST ═══════════════════════════════════════════════════════
+function toast(msg, type='info') {
+  const icons = {success:'✅', error:'❌', info:'ℹ️'};
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(() => { t.style.animation='toastOut .25s ease forwards'; setTimeout(()=>t.remove(),300); }, 3500);
+}
+
+// ══ MODAL ═══════════════════════════════════════════════════════
+function openModal(title, bodyHTML, onSubmit) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHTML +
+    (onSubmit ? `<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="modal-submit-btn" onclick="runModalSubmit()">Salvar</button></div>` : '');
+  window._modalSubmit = onSubmit || null;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+async function runModalSubmit() {
+  const btn = document.getElementById('modal-submit-btn');
+  if (!btn || !window._modalSubmit) return;
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  await window._modalSubmit();
+  btn.disabled = false; btn.textContent = 'Salvar';
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModalOnBg(e) { if(e.target.id==='modal-overlay') closeModal(); }
+
+// ══ HELPERS ═════════════════════════════════════════════════════
+function badge(text, color) { return `<span class="badge badge-${color}">${text||'—'}</span>`; }
+function statusBadge(s) {
+  const m = {ATIVA:'green',ENCERRADA:'gray',PENDENTE:'yellow',PAGA:'green',CANCELADA:'red',
+    CONFIRMADA:'blue',TODOS:'blue',MORADORES:'green',PROPRIETARIOS:'purple',BLOCO_ESPECIFICO:'orange',
+    UP:'green',DOWN:'red',CONTESTADA:'orange',PROPRIETARIO:'purple',RESIDENTE:'green',
+    PROPRIETARIO_RESIDENTE:'blue'};
+  return badge(s, m[s]||'gray');
+}
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('pt-BR') : '—'; }
+function fmtDateTime(d) { return d ? new Date(d).toLocaleString('pt-BR') : '—'; }
+function emptyState(msg) { return `<div class="empty-state"><div class="icon">📭</div><p>${msg}</p></div>`; }
+function errState(msg) { return `<div class="error-state">⚠️ ${msg}</div>`; }
+function toArr(r) {
+  if (!r.ok) return null; // null = error, [] = empty
+  return Array.isArray(r.data) ? r.data : r.data?.content || r.data?.data || r.data?.items || [];
+}
+
+// ══ DASHBOARD ═══════════════════════════════════════════════════
+async function renderDashboard() {
+  if (STATE.role === 'MORADOR' || STATE.role === 'FUNCIONARIO') {
+    return renderDashboardMorador();
+  }
+  const c = document.getElementById('content');
+  const [unidades, pessoas, comunicados] = await Promise.all([
+    api('GET','/api/condominio/unidades'),
+    api('GET','/api/condominio/pessoas'),
+    api('GET','/api/condominio/comunicados'),
+  ]);
+  const countOf = r => {
+    const arr = toArr(r);
+    if (arr === null) return '!';
+    return Array.isArray(arr) ? arr.length : r.data?.totalElements ?? '?';
+  };
+  c.innerHTML = `
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon">🏠</div><div class="stat-num">${countOf(unidades)}</div><div class="stat-label">Unidades</div></div>
+    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-num">${countOf(pessoas)}</div><div class="stat-label">Pessoas</div></div>
+    <div class="stat-card"><div class="stat-icon">📣</div><div class="stat-num">${countOf(comunicados)}</div><div class="stat-label">Comunicados</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>Status dos Serviços</h3><button class="btn btn-sm btn-secondary" onclick="renderDashboard()">↻ Atualizar</button></div>
+    <div id="health-grid"><div class="loading">Verificando…</div></div>
+  </div>`;
+
+  const svcs = [
+    {name:'api-gateway',    path:'/api/iam/auth/login', isGateway:true},
+    {name:'iam-service',    path:'/api/iam/actuator/health'},
+    {name:'condominio',     path:'/api/condominio/actuator/health'},
+    {name:'portaria',       path:'/api/portaria/actuator/health'},
+    {name:'notificacao',    path:'/api/notificacoes/actuator/health'},
+    {name:'auditoria',      path:'/api/auditoria/actuator/health'},
+  ];
+  const results = await Promise.all(svcs.map(s => {
+    if (s.isGateway) {
+      return fetch(GATEWAY + s.path, {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})
+        .then(r => ({ok:true, status:r.status, data:{status:'UP'}}))
+        .catch(() => ({ok:false, status:0, data:null}));
+    }
+    return api('GET', s.path, null, true); // skip log for health checks
+  }));
+  const el = document.getElementById('health-grid');
+  if (!el) return;
+  el.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:10px">` +
+    svcs.map((s,i) => {
+      const r = results[i];
+      const up = s.isGateway ? r.ok : r.status !== 0;
+      const label = s.isGateway ? (r.ok ? 'UP' : 'offline')
+        : r.status === 0 ? 'offline' : r.status === 200 ? 'UP' : r.data?.status || r.status;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;background:${up?'#f0fdf4':'#fef2f2'};border:1px solid ${up?'#bbf7d0':'#fecaca'}">
+        <span>${up?'🟢':'🔴'}</span>
+        <span style="font-size:13px;font-weight:600">${s.name}</span>
+        <span class="chip">${label}</span>
+      </div>`;
+    }).join('') + '</div>';
+}
+
+async function renderDashboardMorador() {
+  const c = document.getElementById('content');
+  c.innerHTML = `<div class="loading">⏳ Carregando…</div>`;
+  const [reservas, multas, comunicados, notifs] = await Promise.all([
+    api('GET', '/api/condominio/reservas'),
+    api('GET', '/api/condominio/multas'),
+    api('GET', '/api/condominio/comunicados'),
+    api('GET', '/api/notificacoes/minhas'),
+  ]);
+
+  const rsv = toArr(reservas) || [];
+  const mlt = toArr(multas) || [];
+  const com = toArr(comunicados) || [];
+  const ntf = Array.isArray(notifs.data) ? notifs.data : [];
+  const naoLidas = ntf.filter(n => !n.lida).length;
+  const multasPendentes = mlt.filter(m => m.status === 'PENDENTE');
+
+  c.innerHTML = `
+  <div class="section-header"><h2>Olá, ${STATE.email.split('@')[0]} 👋</h2></div>
+
+  <div class="stats-grid" style="margin-bottom:24px">
+    <div class="stat-card" onclick="navigate('Reservas')" style="cursor:pointer">
+      <div class="stat-icon">📅</div>
+      <div class="stat-num">${rsv.filter(r=>r.status==='CONFIRMADA').length}</div>
+      <div class="stat-label">Reservas ativas</div>
+    </div>
+    <div class="stat-card" onclick="navigate('Multas')" style="cursor:pointer;${multasPendentes.length?'border:2px solid #f87171':''}">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-num" style="${multasPendentes.length?'color:#ef4444':''}">${multasPendentes.length}</div>
+      <div class="stat-label">Multas pendentes</div>
+    </div>
+    <div class="stat-card" onclick="navigate('Notificações')" style="cursor:pointer">
+      <div class="stat-icon">🔔</div>
+      <div class="stat-num" style="${naoLidas?'color:var(--accent)':''}">${naoLidas}</div>
+      <div class="stat-label">Notificações novas</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex-wrap:wrap">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-header"><h3>📣 Últimos Comunicados</h3></div>
+      ${com.slice(0,3).map(co=>`
+        <div style="padding:10px 0;border-bottom:1px solid #f1f5f9">
+          <strong style="font-size:13px">${co.titulo||'—'}</strong>
+          <p style="font-size:12px;color:#64748b;margin-top:4px">${(co.mensagem||co.conteudo||'').substring(0,80)}…</p>
+          <small style="color:#94a3b8">${fmtDate(co.dataPublicacao)}</small>
+        </div>`).join('') || emptyState('Nenhum comunicado')}
+      <button class="btn btn-sm btn-secondary" style="margin-top:12px" onclick="navigate('Comunicados')">Ver todos</button>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <div class="card-header"><h3>📅 Minhas Reservas</h3></div>
+      ${rsv.slice(0,3).map(r=>`
+        <div style="padding:10px 0;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between">
+          <div><strong style="font-size:13px">${r.areaComumNome||r.areaComumId||'—'}</strong>
+          <br><small style="color:#64748b">${fmtDate(r.dataReserva)} · ${r.horaInicio}–${r.horaFim}</small></div>
+          ${statusBadge(r.status||'CONFIRMADA')}
+        </div>`).join('') || emptyState('Nenhuma reserva')}
+      <button class="btn btn-sm btn-secondary" style="margin-top:12px" onclick="navigate('Reservas')">Gerenciar</button>
+    </div>
+  </div>`;
+}
+
+// ══ UNIDADES ════════════════════════════════════════════════════
+async function renderUnidades() {
+  const c = document.getElementById('content');
+  const r = await api('GET','/api/condominio/unidades');
+  const items = toArr(r) || [];
+  c.innerHTML = `
+  <div class="section-header">
+    <h2>Unidades</h2>
+    ${['ADMIN','SINDICO'].includes(STATE.role) ? '<button class="btn btn-primary" onclick="modalNovaUnidade()">➕ Nova Unidade</button>' : ''}
+  </div>
+  ${r.status !== 0 && !r.ok ? errState('Erro ao carregar: ' + (r.data?.detail || r.status)) : ''}
+  <div class="card">
+    <div class="table-wrap"><table>
+    <thead><tr><th>Número</th><th>Bloco</th><th>Tipo</th><th>Status</th><th>Criada em</th><th>Ações</th></tr></thead>
+    <tbody>${items.length ? items.map(u => `<tr>
+      <td><strong>${u.numero||'—'}</strong></td>
+      <td>${u.bloco||'—'}</td>
+      <td><span class="chip">${u.tipo||'—'}</span></td>
+      <td>${u.ativa !== false ? badge('Ativa','green') : badge('Inativa','gray')}</td>
+      <td>${fmtDate(u.criadaEm)}</td>
+      <td><button class="btn btn-sm btn-secondary" onclick="verUnidade('${u.id}','${u.numero} — Bloco ${u.bloco}')">🔍 Detalhes</button></td>
+    </tr>`).join('') : `<tr><td colspan="6">${emptyState('Nenhuma unidade cadastrada')}</td></tr>`}
+    </tbody></table></div>
+  </div>`;
+}
+
+function modalNovaUnidade() {
+  openModal('Nova Unidade', `
+    <div class="form-group"><label>Número</label><input type="text" id="u-numero" placeholder="101"></div>
+    <div class="form-group"><label>Bloco</label><input type="text" id="u-bloco" placeholder="A"></div>
+    <div class="form-group"><label>Tipo</label><select id="u-tipo"><option>APARTAMENTO</option><option>CASA</option></select></div>
+  `, async function() {
+    // NovaUnidadeRequest: numero, bloco, tipo (sem area_m2)
+    const body = {
+      numero: document.getElementById('u-numero').value.trim(),
+      bloco:  document.getElementById('u-bloco').value.trim().toUpperCase(),
+      tipo:   document.getElementById('u-tipo').value,
+    };
+    if (!body.numero || !body.bloco) { toast('Preencha número e bloco','error'); return; }
+    const r = await api('POST', '/api/condominio/unidades', body);
+    if (r.ok) { toast('Unidade criada!','success'); closeModal(); renderUnidades(); }
+    else toast('Erro: ' + (r.data?.detail || r.data?.message || JSON.stringify(r.data)),'error');
+  });
+}
+
+async function verUnidade(id, label) {
+  const [vincs, veics, multas] = await Promise.all([
+    api('GET', `/api/condominio/unidades/${id}/vinculacoes`),
+    api('GET', `/api/condominio/veiculos/unidade/${id}`),
+    api('GET', `/api/condominio/multas/unidade/${id}`),
+  ]);
+  const vs = toArr(vincs) || [];
+  // Busca o nome de cada pessoa das vinculações em paralelo
+  const pessoasMap = {};
+  await Promise.all(vs.map(async v => {
+    if (v.pessoaId && !pessoasMap[v.pessoaId]) {
+      const rp = await api('GET', `/api/condominio/pessoas/${v.pessoaId}`);
+      pessoasMap[v.pessoaId] = rp.ok ? (rp.data?.nomeCompleto || 'Desconhecido') : v.pessoaId.substring(0,8)+'…';
+    }
+  }));
+  window._unitData = { id, vs, vcs: toArr(veics)||[], ms: toArr(multas)||[], pessoasMap };
+  openModal(`Unidade ${label}`, buildUnitModal('vinc'));
+}
+
+function buildUnitModal(tab) {
+  const {id, vs, vcs, ms} = window._unitData;
+  const tabs = `<div class="tabs">
+    <div class="tab ${tab==='vinc'?'active':''}" onclick="switchUnitTab('vinc')">Vinculações (${vs.length})</div>
+    <div class="tab ${tab==='veic'?'active':''}" onclick="switchUnitTab('veic')">Veículos (${vcs.length})</div>
+    <div class="tab ${tab==='mult'?'active':''}" onclick="switchUnitTab('mult')">Multas (${ms.length})</div>
+  </div>`;
+  let body = '';
+  const pessoasMap = window._unitData.pessoasMap || {};
+  if (tab === 'vinc') body = vs.length
+    ? vs.map(v => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid #f1f5f9;border-radius:10px;margin-bottom:8px">
+        <div>
+          <strong style="font-size:14px">${pessoasMap[v.pessoaId] || '—'}</strong>
+          <div style="margin-top:4px">${statusBadge(v.tipo||'—')} <small style="color:#64748b;margin-left:8px">${fmtDate(v.dataInicio)} → ${v.dataFim ? fmtDate(v.dataFim) : 'ativo'}</small></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${statusBadge(v.status||'ATIVA')}
+          ${v.status !== 'ENCERRADA' && ['ADMIN','SINDICO'].includes(STATE.role)
+            ? `<button class="btn btn-sm btn-danger" onclick="encerrarVinculacao('${v.id}','${id}')">✕</button>` : ''}
+        </div>
+      </div>`).join('') : emptyState('Sem vinculações');
+  if (tab === 'veic') body = vcs.length
+    ? `<div class="table-wrap"><table><thead><tr><th>Placa</th><th>Modelo</th><th>Cor</th><th></th></tr></thead><tbody>${vcs.map(v=>`<tr><td><strong>${v.placa||'—'}</strong></td><td>${v.modelo||'—'}</td><td>${v.cor||'—'}</td><td><button class="btn btn-sm btn-danger" onclick="deletarVeiculo('${v.id}','${id}')">🗑</button></td></tr>`).join('')}</tbody></table></div>`
+    : emptyState('Sem veículos');
+  if (tab === 'mult') body = ms.length
+    ? ms.map(m => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid #f1f5f9;border-radius:10px;margin-bottom:8px">
+        <div><strong>${m.motivo||m.descricao||'—'}</strong><br><small style="color:#64748b">R$ ${(m.valor||0).toFixed(2)} · vence ${fmtDate(m.dataVencimento)}</small></div>
+        ${statusBadge(m.status||'PENDENTE')}
+      </div>`).join('') : emptyState('Sem multas');
+  const actions = ['ADMIN','SINDICO','PORTEIRO'].includes(STATE.role) ? `
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+      <button class="btn btn-sm btn-primary" onclick="modalVinculacao('${id}')">➕ Vincular Pessoa</button>
+      <button class="btn btn-sm btn-secondary" onclick="modalVeiculo('${id}')">🚗 Veículo</button>
+      ${['ADMIN','SINDICO'].includes(STATE.role) ? `<button class="btn btn-sm btn-danger" onclick="modalMultaUnidade('${id}')">⚠️ Aplicar Multa</button>` : ''}
+    </div>` : '';
+  return tabs + `<div id="unit-tab-body">${body}</div>` + actions;
+}
+
+function switchUnitTab(tab) {
+  document.getElementById('modal-body').innerHTML = buildUnitModal(tab) +
+    `<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Fechar</button></div>`;
+}
+
+async function modalVinculacao(unidadeId) {
+  const ps = await api('GET','/api/condominio/pessoas');
+  const pessoas = toArr(ps) || [];
+  openModal('Vincular Pessoa', `
+    <div class="form-group"><label>Pessoa</label>
+      <select id="v-pessoa">${pessoas.length
+        ? pessoas.map(p => `<option value="${p.id}">${p.nomeCompleto} — ${p.documento||'—'}</option>`).join('')
+        : '<option value="">Nenhuma pessoa cadastrada</option>'}</select>
+    </div>
+    <div class="form-group"><label>Tipo</label>
+      <select id="v-tipo"><option>PROPRIETARIO</option><option>RESIDENTE</option><option>PROPRIETARIO_RESIDENTE</option></select>
+    </div>
+    <div class="form-group"><label>Data Início</label><input type="date" id="v-dt" value="${new Date().toISOString().slice(0,10)}"></div>
+  `, async function() {
+    const pessoaId = document.getElementById('v-pessoa').value;
+    if (!pessoaId) { toast('Selecione uma pessoa','error'); return; }
+    const r = await api('POST', `/api/condominio/unidades/${unidadeId}/vinculacoes`, {
+      pessoaId, tipo: document.getElementById('v-tipo').value,
+      dataInicio: document.getElementById('v-dt').value
+    });
+    if (r.ok) { toast('Vinculação criada!','success'); closeModal(); verUnidade(unidadeId, ''); }
+    else toast('Erro: ' + (r.data?.detail || r.data?.message || JSON.stringify(r.data)),'error');
+  });
+}
+
+async function modalVeiculo(unidadeId) {
+  openModal('Adicionar Veículo', `
+    <div class="form-group"><label>Placa</label><input type="text" id="vc-placa" placeholder="ABC1D23" style="text-transform:uppercase" maxlength="8"></div>
+    <div class="form-group"><label>Modelo</label><input type="text" id="vc-modelo" placeholder="Gol 1.0"></div>
+    <div class="form-group"><label>Cor</label><input type="text" id="vc-cor" placeholder="Branco"></div>
+  `, async function() {
+    const placa = document.getElementById('vc-placa').value.toUpperCase().trim();
+    if (!placa) { toast('Informe a placa','error'); return; }
+    // POST /condominio/veiculos com unidadeId no body (não existe /unidades/{id}/veiculos)
+    const r = await api('POST', `/api/condominio/veiculos`, {
+      placa, modelo: document.getElementById('vc-modelo').value,
+      cor: document.getElementById('vc-cor').value, unidadeId
+    });
+    if (r.ok) { toast('Veículo adicionado!','success'); closeModal(); }
+    else toast('Erro: ' + (r.data?.detail || r.data?.message || JSON.stringify(r.data)),'error');
+  });
+}
+
+async function modalMultaUnidade(unidadeId) {
+  openModal('Aplicar Multa', `
+    <div class="form-group"><label>Motivo</label><input type="text" id="m-motivo" placeholder="Barulho após 22h"></div>
+    <div class="form-group"><label>Valor (R$)</label><input type="number" id="m-valor" placeholder="150.00" step="0.01" min="0.01"></div>
+    <div class="form-group"><label>Categoria</label>
+      <select id="m-cat"><option>CONVIVENCIA</option><option>ESTRUTURAL</option><option>ADMINISTRATIVA</option></select>
+    </div>
+    <div class="form-group"><label>Data de Vencimento</label><input type="date" id="m-venc"></div>
+  `, async function() {
+    const motivo = document.getElementById('m-motivo').value.trim();
+    const valor = parseFloat(document.getElementById('m-valor').value);
+    const dataVencimento = document.getElementById('m-venc').value;
+    if (!motivo) { toast('Informe o motivo','error'); return; }
+    if (!valor || valor <= 0) { toast('Informe um valor válido','error'); return; }
+    if (!dataVencimento) { toast('Informe a data de vencimento','error'); return; }
+    // POST /condominio/multas com unidadeId no body (não existe /unidades/{id}/multas)
+    // campo: "motivo" (não "descricao") — conforme NovaMultaRequest.java
+    const r = await api('POST', `/api/condominio/multas`, {
+      unidadeId, motivo, valor, categoria: document.getElementById('m-cat').value, dataVencimento
+    });
+    if (r.ok) { toast('Multa aplicada!','success'); closeModal(); }
+    else toast('Erro: ' + (r.data?.detail || r.data?.message || JSON.stringify(r.data)),'error');
+  });
+}
+
+// ══ PESSOAS ═════════════════════════════════════════════════════
+async function renderPessoas() {
+  const c = document.getElementById('content');
+  c.innerHTML = `<div class="loading">⏳ Carregando pessoas…</div>`;
+  const r = await api('GET','/api/condominio/pessoas');
+  const items = toArr(r) || [];
+
+  // Busca credencial de cada pessoa em paralelo (para mostrar role e status)
+  const credMap = {};
+  if (STATE.role === 'ADMIN') {
+    await Promise.all(items.map(async p => {
+      if (!p.credencialId) return;
+      const rc = await api('GET', `/api/iam/credenciais/${p.credencialId}`);
+      if (rc.ok) credMap[p.id] = rc.data;
+    }));
+  }
+
+  c.innerHTML = `
+  <div class="section-header"><h2>Pessoas</h2>
+    ${['ADMIN','SINDICO'].includes(STATE.role) ? '<button class="btn btn-primary" onclick="modalNovaPessoa()">➕ Nova Pessoa</button>' : ''}
+  </div>
+  <div class="search-bar">
+    <input type="text" id="cpf-search" placeholder="Buscar por CPF…" onkeydown="if(event.key==='Enter')buscarPorCpf()">
+    <button class="btn btn-secondary" onclick="buscarPorCpf()">🔍 Buscar CPF</button>
+  </div>
+  <div id="cpf-result"></div>
+  ${r.status !== 0 && !r.ok ? errState('Erro ' + r.status + ': ' + (r.data?.detail || 'Falha ao carregar pessoas')) : ''}
+  <div class="card">
+    <div class="table-wrap"><table>
+    <thead><tr><th>Nome</th><th>CPF</th><th>E-mail</th><th>Telefone</th><th>Perfil</th><th>Conta</th>${STATE.role==='ADMIN'?'<th></th>':''}</tr></thead>
+    <tbody>${items.length ? items.map(p => {
+      const cred = credMap[p.id];
+      const roles = cred?.roles?.join(', ') || '—';
+      const credStatus = cred?.status || '—';
+      return `<tr>
+        <td><strong>${p.nomeCompleto||'—'}</strong></td>
+        <td><span class="chip">${p.documento||'—'}</span></td>
+        <td><span style="font-size:12px" title="${p.emailContato||''}">${(p.emailContato||'—').substring(0,28)}${(p.emailContato||'').length>28?'…':''}</span></td>
+        <td style="font-size:12px">${p.telefone||'—'}</td>
+        <td>${cred ? badge(roles, roles.includes('ADMIN')?'red':roles.includes('SINDICO')?'purple':roles.includes('PORTEIRO')?'blue':'green') : '<span style="color:#94a3b8;font-size:12px">—</span>'}</td>
+        <td>${cred ? statusBadge(credStatus) : '<span style="color:#94a3b8;font-size:12px">—</span>'}</td>
+        ${STATE.role==='ADMIN' && cred ? `<td><button class="btn btn-sm btn-secondary" onclick="modalAlterarStatusCredencial('${p.credencialId}','${(p.nomeCompleto||'').replace(/'/g,'')}')">🔒 Gerenciar</button></td>` : STATE.role==='ADMIN' ? '<td></td>' : ''}
+      </tr>`;
+    }).join('') : `<tr><td colspan="7">${emptyState('Nenhuma pessoa cadastrada')}</td></tr>`}
+    </tbody></table></div>
+  </div>`;
+}
+
+async function buscarPorCpf() {
+  const cpf = document.getElementById('cpf-search').value.trim().replace(/\D/g,'');
+  if (!cpf) { toast('Digite um CPF','info'); return; }
+  const r = await api('GET', `/api/condominio/pessoas?cpf=${cpf}`);
+  const el = document.getElementById('cpf-result');
+  if (!r.ok || !r.data?.id) {
+    el.innerHTML = `<div class="error-state">Pessoa não encontrada com CPF: ${cpf}</div>`;
+    return;
+  }
+  const p = r.data;
+  // Para ADMIN, busca também a credencial para mostrar role/status
+  let credHTML = '';
+  if (STATE.role === 'ADMIN' && p.credencialId) {
+    const rc = await api('GET', `/api/iam/credenciais/${p.credencialId}`);
+    if (rc.ok) {
+      const roles = rc.data.roles?.join(', ') || '—';
+      credHTML = `
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${badge(roles, roles.includes('ADMIN')?'red':roles.includes('SINDICO')?'purple':roles.includes('PORTEIRO')?'blue':'green')}
+          ${statusBadge(rc.data.status||'—')}
+          <button class="btn btn-sm btn-secondary" onclick="modalAlterarStatusCredencial('${p.credencialId}','${(p.nomeCompleto||'').replace(/'/g,'')}')">🔒 Gerenciar conta</button>
+        </div>`;
+    }
+  }
+  el.innerHTML = `<div class="card" style="border:2px solid var(--accent);margin-bottom:16px">
+    <div style="display:flex;gap:16px;align-items:center">
+      <div style="font-size:32px">👤</div>
+      <div>
+        <strong style="font-size:15px">${p.nomeCompleto}</strong><br>
+        <span class="chip">${p.documento}</span>
+        <span style="font-size:12px;color:#64748b;margin-left:8px">${p.emailContato||'—'}</span>
+        <br><small style="color:#94a3b8;font-size:11px">ID: ${p.id}</small>
+        ${credHTML}
+      </div>
+    </div>
+  </div>`;
+}
+
+function modalNovaPessoa() {
+  openModal('Nova Pessoa', `
+    <p style="font-size:12px;color:#64748b;margin-bottom:16px;background:#f8fafc;padding:10px;border-radius:8px">
+      Cria a pessoa no condomínio e a credencial de acesso no IAM simultaneamente.
+    </p>
+    <div class="form-group"><label>Nome Completo</label><input type="text" id="p-nome" placeholder="João Silva"></div>
+    <div class="form-group"><label>CPF (só dígitos)</label><input type="text" id="p-doc" placeholder="12345678900" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+    <div class="form-group"><label>E-mail (login)</label><input type="email" id="p-email" placeholder="joao@email.com"></div>
+    <div class="form-group"><label>Senha inicial</label><input type="password" id="p-senha" placeholder="Mínimo 8 caracteres"></div>
+    <div class="form-group"><label>Telefone</label><input type="text" id="p-tel" placeholder="11999998888"></div>
+    <div class="form-group"><label>E-mail de contato</label><input type="email" id="p-emailc" placeholder="contato@email.com"></div>
+    <div class="form-group"><label>Role</label>
+      <select id="p-role"><option>MORADOR</option><option>PROPRIETARIO</option><option>SINDICO</option><option>PORTEIRO</option><option>ADMIN</option></select>
+    </div>
+  `, async function() {
+    const nome = document.getElementById('p-nome').value.trim();
+    const doc  = document.getElementById('p-doc').value.trim();
+    const email = document.getElementById('p-email').value.trim();
+    const senha = document.getElementById('p-senha').value;
+    if (!nome || !doc || !email || !senha) { toast('Preencha todos os campos obrigatórios','error'); return; }
+    if (doc.length !== 11) { toast('CPF deve ter 11 dígitos','error'); return; }
+    const body = {
+      nomeCompleto: nome, documento: doc, email, senhaInicial: senha,
+      telefone: document.getElementById('p-tel').value,
+      emailContato: document.getElementById('p-emailc').value || email,
+      role: document.getElementById('p-role').value
+    };
+    const r = await api('POST', '/api/condominio/pessoas', body);
+    if (r.ok) { toast('Pessoa criada com sucesso!','success'); closeModal(); renderPessoas(); }
+    else toast('Erro: ' + (r.data?.detail || r.data?.message || JSON.stringify(r.data)),'error');
+  });
+}
+
+// ══ COMUNICADOS ══════════════════════════════════════════════════
+async function renderComunicados() {
+  const c = document.getElementById('content');
+  const r = await api('GET','/api/condominio/comunicados');
+  const items = toArr(r) || [];
+  c.innerHTML = `
+  <div class="section-header"><h2>Comunicados</h2>
+    ${['ADMIN','SINDICO'].includes(STATE.role) ? '<button class="btn btn-primary" onclick="modalNovoComunicado()">📢 Publicar</button>' : ''}
+  </div>
+  ${r.status !== 0 && !r.ok ? errState('Erro ao carregar comunicados') : ''}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
+    ${items.length ? items.map(com => `
+    <div class="card" style="margin-bottom:0">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        ${statusBadge(com.visibilidade||com.publicoAlvo||'TODOS')}
+        ${['ADMIN','SINDICO'].includes(STATE.role) ? `<button class="btn btn-sm btn-danger" onclick="deletarComunicado('${com.id}')">🗑</button>` : ''}
+      </div>
+      <h3 style="font-size:15px;margin-bottom:8px">${com.titulo||'—'}</h3>
+      <p style="font-size:13px;color:#64748b;line-height:1.6">${com.mensagem||com.conteudo||'—'}</p>
+      <div style="margin-top:12px;font-size:11px;color:#94a3b8">${fmtDateTime(com.dataPublicacao)}</div>
+    </div>`).join('') : emptyState('Nenhum comunicado publicado')}
+  </div>`;
+}
+
+function modalNovoComunicado() {
+  openModal('Publicar Comunicado', `
+    <div class="form-group"><label>Título</label><input type="text" id="co-titulo" placeholder="Manutenção no Elevador"></div>
+    <div class="form-group"><label>Conteúdo</label><textarea id="co-conteudo" rows="4" placeholder="Detalhe o comunicado…"></textarea></div>
+    <div class="form-group"><label>Destinatário</label>
+      <select id="co-destino" onchange="toggleBlocoField()">
+        <option value="todos">Todos os moradores</option>
+        <option value="moradores">Apenas moradores</option>
+        <option value="proprietarios">Apenas proprietários</option>
+        <option value="bloco">Bloco específico</option>
+      </select>
+    </div>
+    <div class="form-group" id="co-bloco-group" style="display:none">
+      <label>Bloco</label>
+      <input type="text" id="co-bloco" placeholder="A, B, C…" style="text-transform:uppercase">
+    </div>
+  `, async function() {
+    const titulo   = document.getElementById('co-titulo').value.trim();
+    const conteudo = document.getElementById('co-conteudo').value.trim();
+    const destino  = document.getElementById('co-destino').value;
+    if (!titulo || !conteudo) { toast('Preencha título e conteúdo','error'); return; }
+
+    let path, body;
+    if (destino === 'bloco') {
+      const bloco = document.getElementById('co-bloco').value.trim().toUpperCase();
+      if (!bloco) { toast('Informe o bloco','error'); return; }
+      path = `/api/condominio/comunicados/bloco/${bloco}`;
+      body = { titulo, conteudo };
+    } else {
+      const visMap = { todos:'TODOS', moradores:'MORADORES', proprietarios:'PROPRIETARIOS' };
+      path = '/api/condominio/comunicados';
+      body = { titulo, conteudo, visibilidade: visMap[destino] || 'TODOS' };
+    }
+    const r = await api('POST', path, body);
+    if (r.ok) { toast('Comunicado publicado!','success'); closeModal(); renderComunicados(); }
+    else toast('Erro: ' + (r.data?.detail || r.data?.message || JSON.stringify(r.data)),'error');
+  });
+}
+function toggleBlocoField() {
+  const show = document.getElementById('co-destino').value === 'bloco';
+  document.getElementById('co-bloco-group').style.display = show ? 'block' : 'none';
+}
+
+async function deletarComunicado(id) {
+  if (!confirm('Remover este comunicado?')) return;
+  const r = await api('DELETE', `/api/condominio/comunicados/${id}`);
+  if (r.ok) { toast('Comunicado removido','success'); renderComunicados(); }
+  else toast('Erro: ' + (r.data?.detail || r.data?.message || JSON.stringify(r.data)),'error');
+}
+
+// ══ MULTAS ═══════════════════════════════════════════════════════
+async function renderMultas() {
+  const c = document.getElementById('content');
+  const r = await api('GET','/api/condominio/multas');
+  const items = toArr(r) || [];
+  c.innerHTML = `
+  <div class="section-header"><h2>Multas</h2></div>
+  ${r.status !== 0 && !r.ok ? errState('Erro ' + r.status + ' ao carregar multas: ' + (r.data?.detail||'verifique os logs do serviço')) : ''}
+  <div class="card">
+    <div class="table-wrap"><table>
+    <thead><tr><th>Descrição</th><th>Valor</th><th>Categoria</th><th>Status</th><th>Vencimento</th><th>Ações</th></tr></thead>
+    <tbody>${items.length ? items.map(m => `<tr>
+      <td>${m.motivo||m.descricao||'—'}</td>
+      <td><strong>R$ ${(m.valor||0).toFixed(2)}</strong></td>
+      <td><span class="chip">${m.categoria||'—'}</span></td>
+      <td>${statusBadge(m.status||'PENDENTE')}</td>
+      <td>${fmtDate(m.dataVencimento)}</td>
+      <td>${['ADMIN','SINDICO'].includes(STATE.role) ? `<button class="btn btn-sm btn-secondary" onclick="modalAtualizarMulta('${m.id}')">✏️ Status</button>` : ''}</td>
+    </tr>`).join('') : `<tr><td colspan="6">${emptyState('Nenhuma multa encontrada')}</td></tr>`}
+    </tbody></table></div>
+  </div>
+  <p style="font-size:12px;color:#94a3b8">💡 Para aplicar multas em uma unidade: Unidades → Detalhes → Aplicar Multa</p>`;
+}
+
+function modalAtualizarMulta(id) {
+  openModal('Atualizar Status da Multa', `
+    <div class="form-group"><label>Novo Status</label>
+      <select id="ms-status"><option>PENDENTE</option><option>PAGA</option><option>CANCELADA</option><option>CONTESTADA</option></select>
+    </div>
+  `, async function() {
+    // @RequestParam no backend — status vai na query string, não no body
+    const status = document.getElementById('ms-status').value;
+    const r = await api('PATCH', `/api/condominio/multas/${id}/status?status=${status}`);
+    if (r.ok) { toast('Status atualizado!','success'); closeModal(); renderMultas(); }
+    else toast('Erro: ' + (r.data?.detail || r.data?.message || JSON.stringify(r.data)),'error');
+  });
+}
+
+// ══ ÁREAS COMUNS ════════════════════════════════════════════════
+async function renderAreasComuns() {
+  const c = document.getElementById('content');
+  const r = await api('GET','/api/condominio/areas-comuns');
+  const items = toArr(r) || [];
+  c.innerHTML = `
+  <div class="section-header"><h2>Áreas Comuns</h2>
+    ${['ADMIN','SINDICO'].includes(STATE.role) ? '<button class="btn btn-primary" onclick="modalNovaArea()">➕ Nova Área</button>' : ''}
+  </div>
+  ${r.status !== 0 && !r.ok ? errState('Erro ao carregar áreas') : ''}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px">
+    ${items.length ? items.map(a => `
+    <div class="card" style="margin-bottom:0;opacity:${a.ativa===false?'0.6':'1'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 style="font-size:15px;margin:0">${a.nome||'—'}</h3>
+        ${statusBadge(a.ativa===false?'INATIVA':'ATIVA')}
+      </div>
+      <p style="font-size:13px;color:#64748b;margin-bottom:12px">${a.descricao||'—'}</p>
+      <span class="chip">👥 Cap. ${a.capacidadeMaxima||'?'} pessoas</span>
+      ${a.regras ? `<p style="font-size:11px;color:#94a3b8;margin-top:10px;line-height:1.5">${a.regras}</p>` : ''}
+      ${['ADMIN','SINDICO'].includes(STATE.role) ? `
+      <div style="display:flex;gap:6px;margin-top:14px">
+        ${a.ativa===false
+          ? `<button class="btn btn-sm btn-secondary" onclick="toggleArea('${a.id}',true)">✅ Ativar</button>`
+          : `<button class="btn btn-sm btn-danger" onclick="toggleArea('${a.id}',false)">⛔ Desativar</button>`}
+      </div>` : ''}
+    </div>`).join('') : emptyState('Nenhuma área comum cadastrada')}
+  </div>`;
+}
+
+function modalNovaArea() {
+  openModal('Nova Área Comum', `
+    <div class="form-group"><label>Nome</label><input type="text" id="a-nome" placeholder="Churrasqueira A"></div>
+    <div class="form-group"><label>Descrição</label><input type="text" id="a-desc" placeholder="Espaço com churrasqueira coberta"></div>
+    <div class="form-group"><label>Capacidade Máxima (pessoas)</label><input type="number" id="a-cap" placeholder="25" min="1"></div>
+    <div class="form-group"><label>Regras</label><textarea id="a-regras" placeholder="Uso permitido das 09:00 às 22:00…"></textarea></div>
+  `, async function() {
+    const nome = document.getElementById('a-nome').value.trim();
+    if (!nome) { toast('Informe o nome da área','error'); return; }
+    const r = await api('POST', '/api/condominio/areas-comuns', {
+      nome, descricao: document.getElementById('a-desc').value,
+      capacidadeMaxima: parseInt(document.getElementById('a-cap').value)||0,
+      regras: document.getElementById('a-regras').value
+    });
+    if (r.ok) { toast('Área criada!','success'); closeModal(); renderAreasComuns(); }
+    else toast('Erro: ' + (r.data?.detail || r.data?.message || JSON.stringify(r.data)),'error');
+  });
+}
+
+// ══ RESERVAS ════════════════════════════════════════════════════
+async function renderReservas() {
+  const c = document.getElementById('content');
+  const [resReservas, resAreas] = await Promise.all([
+    api('GET','/api/condominio/reservas'),
+    api('GET','/api/condominio/areas-comuns')
+  ]);
+  const items = toArr(resReservas) || [];
+  window._areas = toArr(resAreas) || [];
+  c.innerHTML = `
+  <div class="section-header"><h2>Reservas</h2>
+    <button class="btn btn-primary" onclick="modalNovaReserva()">📅 Nova Reserva</button>
+  </div>
+  ${resReservas.status !== 0 && !resReservas.ok ? errState('Erro ' + resReservas.status + ' ao carregar reservas: ' + (resReservas.data?.detail||'verifique os logs do serviço')) : ''}
+  <div class="card">
+    <div class="table-wrap"><table>
+    <thead><tr><th>Área</th><th>Data</th><th>Horário</th><th>Status</th><th></th></tr></thead>
+    <tbody>${items.length ? items.map(res => `<tr>
+      <td>${res.areaComumNome||res.areaComumId||'—'}</td>
+      <td>${fmtDate(res.dataReserva)}</td>
+      <td>${res.horaInicio||'—'} → ${res.horaFim||'—'}</td>
+      <td>${statusBadge(res.status||'CONFIRMADA')}</td>
+      <td>${res.status === 'CONFIRMADA' ? `<button class="btn btn-sm btn-danger" onclick="cancelarReserva('${res.id}')">Cancelar</button>` : ''}</td>
+    </tr>`).join('') : `<tr><td colspan="5">${emptyState('Nenhuma reserva encontrada')}</td></tr>`}
+    </tbody></table></div>
+  </div>`;
+}
+
+function modalNovaReserva() {
+  const areas = window._areas || [];
+  openModal('Nova Reserva', `
+    <div class="form-group"><label>Área Comum</label>
+      <select id="r-area">${areas.length
+        ? areas.map(a => `<option value="${a.id}">${a.nome}</option>`).join('')
+        : '<option value="">Nenhuma área cadastrada</option>'}</select>
+    </div>
+    <div class="form-group"><label>Data da Reserva</label><input type="date" id="r-data" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="form-group"><label>Hora Início</label><input type="time" id="r-ini" value="10:00"></div>
+    <div class="form-group"><label>Hora Fim</label><input type="time" id="r-fim" value="14:00"></div>
+  `, async function() {
+    const areaComumId = document.getElementById('r-area').value;
+    const dataReserva = document.getElementById('r-data').value;
+    if (!areaComumId) { toast('Selecione uma área','error'); return; }
+    if (!dataReserva) { toast('Selecione a data','error'); return; }
+    const r = await api('POST', '/api/condominio/reservas', {
+      areaComumId, dataReserva,
+      horaInicio: document.getElementById('r-ini').value,
+      horaFim: document.getElementById('r-fim').value
+    });
+    if (r.ok) { toast('Reserva criada!','success'); closeModal(); renderReservas(); }
+    else toast('Erro: ' + (r.data?.detail || r.data?.message || JSON.stringify(r.data)),'error');
+  });
+}
+
+// ══ FUNCIONÁRIOS ════════════════════════════════════════════════
+async function renderFuncionarios() {
+  const c = document.getElementById('content');
+  c.innerHTML = `<div class="loading">⏳ Carregando…</div>`;
+  const r = await api('GET','/api/condominio/funcionarios');
+  const items = toArr(r) || [];
+
+  // Buscar nome de cada funcionário em paralelo
+  const nomesMap = {};
+  await Promise.all(items.map(async f => {
+    if (!f.pessoaId) return;
+    const rp = await api('GET', `/api/condominio/pessoas/${f.pessoaId}`);
+    nomesMap[f.pessoaId] = rp.ok ? (rp.data?.nomeCompleto || '—') : '—';
+  }));
+
+  c.innerHTML = `
+  <div class="section-header"><h2>Funcionários</h2>
+    ${['ADMIN','SINDICO'].includes(STATE.role) ? '<button class="btn btn-primary" onclick="modalNovoFuncionario()">➕ Cadastrar</button>' : ''}
+  </div>
+  ${r.status !== 0 && !r.ok ? errState('Erro ao carregar funcionários') : ''}
+  <div class="card">
+    <div class="table-wrap"><table>
+    <thead><tr><th>Nome</th><th>Cargo</th><th>Admissão</th><th>Desligamento</th><th>Ativo</th><th></th></tr></thead>
+    <tbody>${items.length ? items.map(f => `<tr>
+      <td><strong>${nomesMap[f.pessoaId]||'—'}</strong></td>
+      <td><span class="chip">${f.cargo||'—'}</span></td>
+      <td>${fmtDate(f.dataAdmissao)}</td>
+      <td>${f.dataDesligamento ? fmtDate(f.dataDesligamento) : '—'}</td>
+      <td>${f.ativo !== false ? badge('Sim','green') : badge('Não','gray')}</td>
+      <td>${f.ativo !== false && ['ADMIN','SINDICO'].includes(STATE.role) ? `<button class="btn btn-sm btn-danger" onclick="desligarFuncionario('${f.id}')">Desligar</button>` : ''}</td>
+    </tr>`).join('') : `<tr><td colspan="6">${emptyState('Nenhum funcionário cadastrado')}</td></tr>`}
+    </tbody></table></div>
+  </div>`;
+}
+
+async function modalNovoFuncionario() {
+  // Carrega lista de pessoas para select
+  const rp = await api('GET', '/api/condominio/pessoas');
+  const pessoas = toArr(rp) || [];
+  openModal('Cadastrar Funcionário', `
+    <div class="form-group"><label>Pessoa</label>
+      <select id="f-pessoa">
+        <option value="">— Selecione —</option>
+        ${pessoas.map(p=>`<option value="${p.id}">${p.nomeCompleto} — ${p.documento||''}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label>Cargo</label>
+      <select id="f-cargo"><option>PORTEIRO</option><option>JARDINEIRO</option><option>LIMPEZA</option><option>ADMINISTRATIVO</option></select>
+    </div>
+    <div class="form-group"><label>Data de Admissão</label><input type="date" id="f-adm" value="${new Date().toISOString().slice(0,10)}"></div>
+  `, async function() {
+    const pessoaId = document.getElementById('f-pessoa').value;
+    if (!pessoaId) { toast('Selecione a pessoa','error'); return; }
+    const r = await api('POST', '/api/condominio/funcionarios', {
+      pessoaId, cargo: document.getElementById('f-cargo').value,
+      dataAdmissao: document.getElementById('f-adm').value
+    });
+    if (r.ok) { toast('Funcionário cadastrado!','success'); closeModal(); renderFuncionarios(); }
+    else toast('Erro: ' + (r.data?.detail || r.data?.message || JSON.stringify(r.data)),'error');
+  });
+}
+
+// ── Funções de ação faltantes ────────────────────────────────────
+
+// Encerrar vinculação de pessoa em unidade
+async function encerrarVinculacao(vinculacaoId, unidadeId) {
+  if (!confirm('Encerrar esta vinculação?')) return;
+  const r = await api('PATCH', `/api/condominio/unidades/vinculacoes/${vinculacaoId}/encerrar`);
+  if (r.ok) { toast('Vinculação encerrada','success'); verUnidade(unidadeId, ''); }
+  else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+}
+
+// Deletar veículo
+async function deletarVeiculo(veiculoId, unidadeId) {
+  if (!confirm('Remover este veículo?')) return;
+  const r = await api('DELETE', `/api/condominio/veiculos/${veiculoId}`);
+  if (r.ok) { toast('Veículo removido','success'); verUnidade(unidadeId, ''); }
+  else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+}
+
+// Desligar funcionário
+async function desligarFuncionario(id) {
+  if (!confirm('Desligar este funcionário?')) return;
+  const r = await api('PATCH', `/api/condominio/funcionarios/${id}/desligar`);
+  if (r.ok) { toast('Funcionário desligado','success'); renderFuncionarios(); }
+  else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+}
+
+// Ativar/desativar área comum
+async function toggleArea(id, ativar) {
+  const action = ativar ? 'ativar' : 'desativar';
+  const r = await api('PATCH', `/api/condominio/areas-comuns/${id}/${action}`);
+  if (r.ok) { toast(`Área ${ativar ? 'ativada' : 'desativada'}!`, 'success'); renderAreasComuns(); }
+  else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+}
+
+// Cancelar reserva
+async function cancelarReserva(id) {
+  if (!confirm('Cancelar esta reserva?')) return;
+  const r = await api('DELETE', `/api/condominio/reservas/${id}`);
+  if (r.ok) { toast('Reserva cancelada','success'); renderReservas(); }
+  else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+}
+
+// Bloquear/desbloquear credencial (ADMIN)
+function modalAlterarStatusCredencial(credencialId, nomeUsuario) {
+  openModal(`Credencial — ${nomeUsuario}`, `
+    <div class="form-group"><label>Novo Status</label>
+      <select id="cred-status">
+        <option value="ATIVO">ATIVO</option>
+        <option value="BLOQUEADO">BLOQUEADO</option>
+        <option value="BLOQUEADO_TEMPORARIAMENTE">BLOQUEADO TEMPORARIAMENTE</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Motivo</label><input type="text" id="cred-motivo" placeholder="Inadimplência, investigação…"></div>
+  `, async function() {
+    const r = await api('PATCH', `/api/iam/credenciais/${credencialId}/status`, {
+      novoStatus: document.getElementById('cred-status').value,
+      motivo: document.getElementById('cred-motivo').value || null
+    });
+    if (r.ok) { toast('Status da credencial atualizado!','success'); closeModal(); }
+    else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+  });
+}
+
+// ══ AUDITORIA ════════════════════════════════════════════════════
+async function renderAuditoria() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+  <div class="section-header"><h2>Auditoria</h2></div>
+  <div class="tabs" style="margin-bottom:16px">
+    <div class="tab active" id="aud-tab-registros"  onclick="audTab('registros')">📋 Registros</div>
+    <div class="tab"        id="aud-tab-anomalias"  onclick="audTab('anomalias')">⚠️ Anomalias</div>
+  </div>
+  <div id="aud-content"></div>`;
+  audTab('registros');
+}
+
+function audTab(tab) {
+  ['registros','anomalias'].forEach(t =>
+    document.getElementById('aud-tab-'+t)?.classList.toggle('active', t===tab));
+  const el = document.getElementById('aud-content');
+  if (tab === 'registros') {
+    el.innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group" style="margin:0;flex:1;min-width:180px"><label>Tipo de Evento</label>
+          <input type="text" id="aud-tipo" placeholder="MULTA_APLICADA, LOGIN…" onkeydown="if(event.key==='Enter')buscarAuditoria()">
+        </div>
+        <div class="form-group" style="margin:0"><label>Página</label><input type="number" id="aud-page" value="0" min="0" style="width:70px"></div>
+        <div class="form-group" style="margin:0"><label>Tamanho</label><input type="number" id="aud-size" value="20" min="1" style="width:70px"></div>
+        <button class="btn btn-primary" onclick="buscarAuditoria()">🔍 Buscar</button>
+      </div>
+    </div>
+    <div id="aud-result"><div class="loading">Carregando…</div></div>`;
+    buscarAuditoria();
+  } else {
+    el.innerHTML = `<div id="aud-anomalias-result"><div class="loading">Carregando…</div></div>`;
+    buscarAnomalias();
+  }
+}
+
+async function buscarAuditoria() {
+  const tipo = document.getElementById('aud-tipo')?.value || '';
+  const page = document.getElementById('aud-page')?.value || 0;
+  const size = document.getElementById('aud-size')?.value || 20;
+  let path = `/api/auditoria/registros?page=${page}&size=${size}`;
+  if (tipo) path += `&tipoEvento=${encodeURIComponent(tipo)}`;
+  const r = await api('GET', path);
+  const el = document.getElementById('aud-result');
+  if (!el) return;
+  if (!r.ok) {
+    el.innerHTML = errState(`Erro ${r.status}: ${r.data?.detail || r.data?.title || JSON.stringify(r.data)}`);
+    return;
+  }
+  const items = toArr(r) || [];
+  el.innerHTML = `<div class="card">
+    <div class="table-wrap"><table>
+    <thead><tr><th>Timestamp</th><th>Tipo</th><th>Serviço</th><th>Entidade</th><th>Correlation ID</th></tr></thead>
+    <tbody>${items.length ? items.map(e => `<tr>
+      <td style="white-space:nowrap">${fmtDateTime(e.timestamp)}</td>
+      <td>${badge(e.tipoEvento||'—','blue')}</td>
+      <td><span class="chip">${e.servicoOrigem||'—'}</span></td>
+      <td>${e.entidadeAfetada ? `${e.entidadeAfetada.tipo||''} #${e.entidadeAfetada.id||''}` : '—'}</td>
+      <td><code style="font-size:10px;color:#64748b" title="${e.correlationId||''}">${(e.correlationId||'—').substring(0,20)}…</code></td>
+    </tr>`).join('') : `<tr><td colspan="5">${emptyState('Nenhum registro encontrado')}</td></tr>`}
+    </tbody></table></div>
+    <p style="font-size:12px;color:#94a3b8;margin-top:12px">Total: ${r.data?.totalElements ?? items.length} registros</p>
+  </div>`;
+}
+
+async function buscarAnomalias() {
+  const r = await api('GET', '/api/auditoria/anomalias?page=0&size=20');
+  const el = document.getElementById('aud-anomalias-result');
+  if (!el) return;
+  if (!r.ok) { el.innerHTML = errState(`Erro ${r.status}: ${r.data?.detail||JSON.stringify(r.data)}`); return; }
+  const items = toArr(r) || [];
+  el.innerHTML = `<div class="card">
+    <div class="table-wrap"><table>
+    <thead><tr><th>Tipo</th><th>Severidade</th><th>Descrição</th><th>Status</th><th>Detectado em</th><th>Ações</th></tr></thead>
+    <tbody>${items.length ? items.map(a => `<tr>
+      <td>${badge(a.tipo||'—','orange')}</td>
+      <td>${statusBadge(a.severidade||'—')}</td>
+      <td style="max-width:250px;white-space:normal;font-size:12px">${a.descricao||'—'}</td>
+      <td>${statusBadge(a.status||'—')}</td>
+      <td style="white-space:nowrap">${fmtDateTime(a.detectadoEm||a.criadoEm)}</td>
+      <td>${['ADMIN','SINDICO'].includes(STATE.role) && a.status !== 'RESOLVIDA' ? `
+        <select onchange="atualizarAnomalia('${a.id}',this.value)" style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid #e2e8f0">
+          <option value="">— ação —</option>
+          <option value="INVESTIGANDO">Investigando</option>
+          <option value="RESOLVIDA">Resolvida</option>
+          <option value="FALSO_POSITIVO">Falso Positivo</option>
+        </select>` : '—'}
+      </td>
+    </tr>`).join('') : `<tr><td colspan="6">${emptyState('Nenhuma anomalia detectada')}</td></tr>`}
+    </tbody></table></div>
+    <p style="font-size:12px;color:#94a3b8;margin-top:12px">Total: ${r.data?.totalElements ?? items.length} anomalias</p>
+  </div>`;
+}
+
+async function atualizarAnomalia(id, novoStatus) {
+  if (!novoStatus) return;
+  const r = await api('PATCH', `/api/auditoria/anomalias/${id}/status`, { novoStatus });
+  if (r.ok) { toast('Anomalia atualizada','success'); buscarAnomalias(); }
+  else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+}
+
+// ══ NOTIFICAÇÕES ════════════════════════════════════════════════
+async function renderNotificacoes() {
+  const c = document.getElementById('content');
+  c.innerHTML = `<div class="loading">⏳ Carregando notificações…</div>`;
+  const r = await api('GET', '/api/notificacoes/minhas');
+  const items = Array.isArray(r.data) ? r.data : [];
+  c.innerHTML = `
+  <div class="section-header"><h2>🔔 Minhas Notificações</h2></div>
+  ${!r.ok ? errState(`Erro ${r.status}: ${r.data?.detail||JSON.stringify(r.data)}`) : ''}
+  <div style="display:flex;flex-direction:column;gap:12px">
+    ${items.length ? items.map(n => `
+    <div class="card" style="margin-bottom:0;border-left:4px solid ${n.lida?'#e2e8f0':'var(--accent)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <strong style="font-size:14px">${n.titulo||n.assunto||'—'}</strong>
+          <p style="font-size:13px;color:#64748b;margin-top:6px;line-height:1.5">${n.mensagem||n.corpo||'—'}</p>
+        </div>
+        <span style="font-size:11px;color:#94a3b8;white-space:nowrap;margin-left:16px">${fmtDateTime(n.criadaEm||n.timestamp)}</span>
+      </div>
+      ${!n.lida ? `<span style="font-size:11px;color:var(--accent);font-weight:700;margin-top:8px;display:block">● NÃO LIDA</span>` : ''}
+    </div>`).join('') : emptyState('Nenhuma notificação')}
+  </div>`;
+}
+
+// ══ PORTARIA ════════════════════════════════════════════════════
+// GET /portaria/visitantes e /portaria/encomendas exigem ?unidadeId= obrigatório
+// Carregamos as unidades primeiro para o porteiro selecionar a unidade desejada
+async function renderPortaria() {
+  const c = document.getElementById('content');
+  c.innerHTML = `<div class="loading">⏳ Carregando unidades…</div>`;
+  const ru = await api('GET', '/api/condominio/unidades');
+  const unidades = toArr(ru) || [];
+  window._portUnidades = unidades;
+
+  c.innerHTML = `
+  <div class="section-header">
+    <h2>Portaria</h2>
+    <select id="port-unidade" onchange="portReload()" style="padding:8px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:inherit;background:#fff">
+      <option value="">— Selecione uma unidade —</option>
+      ${unidades.map(u=>`<option value="${u.id}">Unidade ${u.numero} — Bloco ${u.bloco||'?'}</option>`).join('')}
+    </select>
+  </div>
+  <div class="tabs" style="margin-bottom:16px">
+    <div class="tab active" id="port-tab-visitantes"  onclick="portTab('visitantes')">👤 Visitantes</div>
+    <div class="tab"        id="port-tab-encomendas"  onclick="portTab('encomendas')">📦 Encomendas</div>
+    <div class="tab"        id="port-tab-acessos"     onclick="portTab('acessos')">🚪 Acessos</div>
+  </div>
+  <div id="port-content">${emptyState('Selecione uma unidade para ver os registros')}</div>`;
+}
+
+function portReload() {
+  const active = document.querySelector('[id^="port-tab-"].active');
+  portTab(active?.id?.replace('port-tab-','') || 'visitantes');
+}
+
+async function portTab(tab) {
+  ['visitantes','encomendas','acessos'].forEach(t =>
+    document.getElementById('port-tab-'+t)?.classList.toggle('active', t===tab));
+  const el = document.getElementById('port-content');
+  if (!el) return;
+  const unidadeId = document.getElementById('port-unidade')?.value;
+
+  if (tab === 'acessos') { renderPortAcessos(el, unidadeId); return; }
+  if (!unidadeId) { el.innerHTML = emptyState('Selecione uma unidade acima'); return; }
+
+  el.innerHTML = `<div class="loading">⏳ Carregando…</div>`;
+
+  if (tab === 'visitantes') {
+    const r = await api('GET', `/api/portaria/visitantes?unidadeId=${unidadeId}`);
+    if (!r.ok) { el.innerHTML = errState(`Erro ${r.status}: ${r.data?.detail||JSON.stringify(r.data)}`); return; }
+    const items = toArr(r) || [];
+    el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:13px;font-weight:600;color:#64748b">${items.length} visitante(s)</span>
+      <button class="btn btn-primary btn-sm" onclick="modalNovoVisitante('${unidadeId}')">➕ Registrar Visitante</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table>
+      <thead><tr><th>Nome</th><th>Tipo</th><th>Documento</th><th>Válido até</th><th>Status</th><th>Ações</th></tr></thead>
+      <tbody>${items.length ? items.map(v=>`<tr>
+        <td><strong>${v.nome||'—'}</strong></td>
+        <td><span class="chip">${v.tipo||'—'}</span></td>
+        <td>${v.documento||'—'}</td>
+        <td style="white-space:nowrap">${fmtDateTime(v.validadeFim)}</td>
+        <td>${statusBadge(v.status||'ATIVO')}</td>
+        <td style="display:flex;gap:4px;flex-wrap:wrap">
+          ${v.status !== 'ENCERRADO' ? `
+            <button class="btn btn-sm btn-primary" onclick="modalEntradaVisitante('${v.id}','${(v.nome||'').replace(/'/g,'')}')">🚪 Entrada</button>
+            <button class="btn btn-sm btn-danger"  onclick="encerrarVisita('${v.id}')">✕ Encerrar</button>
+          ` : '<span style="font-size:12px;color:#94a3b8">encerrado</span>'}
+        </td>
+      </tr>`).join('') : `<tr><td colspan="6">${emptyState('Nenhum visitante nesta unidade')}</td></tr>`}
+      </tbody></table></div>
+    </div>`;
+  }
+
+  if (tab === 'encomendas') {
+    const r = await api('GET', `/api/portaria/encomendas?unidadeId=${unidadeId}`);
+    if (!r.ok) { el.innerHTML = errState(`Erro ${r.status}: ${r.data?.detail||JSON.stringify(r.data)}`); return; }
+    const items = toArr(r) || [];
+    el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:13px;font-weight:600;color:#64748b">${items.length} encomenda(s) pendente(s)</span>
+      <button class="btn btn-primary btn-sm" onclick="modalNovaEncomenda('${unidadeId}')">📦 Registrar Encomenda</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table>
+      <thead><tr><th>Tipo</th><th>Descrição</th><th>Rastreio</th><th>Chegada</th><th>Ações</th></tr></thead>
+      <tbody>${items.length ? items.map(e=>`<tr>
+        <td><span class="chip">${e.tipo||'—'}</span></td>
+        <td>${e.descricao||'—'}</td>
+        <td><code style="font-size:11px">${e.codigoRastreio||'—'}</code></td>
+        <td>${fmtDateTime(e.dataChegada||e.criadoEm||e.dataCriacao)}</td>
+        <td><button class="btn btn-sm btn-secondary" onclick="modalRetiradaEncomenda('${e.id}')">✅ Retirada</button></td>
+      </tr>`).join('') : `<tr><td colspan="5">${emptyState('Nenhuma encomenda pendente')}</td></tr>`}
+      </tbody></table></div>
+    </div>`;
+  }
+}
+
+function renderPortAcessos(el, unidadeId) {
+  el.innerHTML = `
+  <div class="card">
+    <div class="card-header"><h3>🚪 Registrar Acesso</h3></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn btn-primary"   onclick="modalEntradaMorador('${unidadeId||''}')">🏠 Entrada Morador</button>
+      <button class="btn btn-secondary" onclick="modalEntradaVisitanteManual()">👤 Entrada Visitante (por ID)</button>
+      <button class="btn btn-secondary" onclick="modalAcessoSaida()">🚶 Registrar Saída</button>
+    </div>
+    <p style="font-size:12px;color:#94a3b8;margin-top:16px">
+      💡 Para registrar entrada de visitante de uma unidade específica, selecione a unidade e vá para a aba Visitantes.
+    </p>
+  </div>`;
+}
+
+// ── PORTARIA: Visitantes ─────────────────────────────────────────
+function modalNovoVisitante(unidadeId) {
+  const now = new Date();
+  const amanha = new Date(now); amanha.setDate(amanha.getDate()+1);
+  const semana = new Date(now); semana.setDate(semana.getDate()+7);
+  const toLocal = d => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  openModal('Registrar Visitante', `
+    <div class="form-group"><label>Nome</label><input type="text" id="pv-nome" placeholder="João da Silva"></div>
+    <div class="form-group"><label>Documento (CPF/RG)</label><input type="text" id="pv-doc" placeholder="12345678900"></div>
+    <div class="form-group"><label>Telefone</label><input type="text" id="pv-tel" placeholder="11999998888"></div>
+    <div class="form-group"><label>Tipo</label>
+      <select id="pv-tipo"><option>SOCIAL</option><option>VISITANTE</option><option>PRESTADOR</option></select>
+    </div>
+    <div class="form-group"><label>Válido de</label><input type="datetime-local" id="pv-ini" value="${toLocal(amanha)}"></div>
+    <div class="form-group"><label>Válido até</label><input type="datetime-local" id="pv-fim" value="${toLocal(semana)}"></div>
+  `, async function() {
+    const nome = document.getElementById('pv-nome').value.trim();
+    if (!nome) { toast('Informe o nome do visitante','error'); return; }
+    const r = await api('POST', '/api/portaria/visitantes', {
+      nome, documento: document.getElementById('pv-doc').value,
+      telefone: document.getElementById('pv-tel').value,
+      tipo: document.getElementById('pv-tipo').value,
+      unidadeId,
+      validadeInicio: document.getElementById('pv-ini').value + ':00',
+      validadeFim:    document.getElementById('pv-fim').value + ':00'
+    });
+    if (r.ok) { toast('Visitante registrado!','success'); closeModal(); portTab('visitantes'); }
+    else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+  });
+}
+
+async function encerrarVisita(visitanteId) {
+  if (!confirm('Encerrar esta visita?')) return;
+  const r = await api('PATCH', `/api/portaria/visitantes/${visitanteId}/encerrar`);
+  if (r.ok) { toast('Visita encerrada','success'); portTab('visitantes'); }
+  else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+}
+
+function modalEntradaVisitante(visitanteId, nome) {
+  openModal(`Entrada — ${nome}`, `
+    <div class="form-group"><label>Observações</label><textarea id="pe-obs" placeholder="Opcional…"></textarea></div>
+  `, async function() {
+    const r = await api('POST', '/api/portaria/acessos/entrada/visitante', {
+      visitanteId, observacoes: document.getElementById('pe-obs').value||null
+    });
+    if (r.ok) { toast('Entrada registrada!','success'); closeModal(); }
+    else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+  });
+}
+
+function modalEntradaVisitanteManual() {
+  openModal('Entrada de Visitante', `
+    <p style="font-size:12px;color:#64748b;margin-bottom:12px;background:#f8fafc;padding:10px;border-radius:8px">
+      O visitante deve estar cadastrado. Copie o ID da aba Visitantes.
+    </p>
+    <div class="form-group"><label>ID do Visitante (UUID)</label><input type="text" id="pa-vid" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+    <div class="form-group"><label>Observações</label><textarea id="pa-obs" placeholder="Opcional…"></textarea></div>
+  `, async function() {
+    const visitanteId = document.getElementById('pa-vid').value.trim();
+    if (!visitanteId) { toast('Informe o ID do visitante','error'); return; }
+    const r = await api('POST', '/api/portaria/acessos/entrada/visitante', {
+      visitanteId, observacoes: document.getElementById('pa-obs').value||null
+    });
+    if (r.ok) { toast('Entrada registrada!','success'); closeModal(); }
+    else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+  });
+}
+
+// ── PORTARIA: Entrada Morador ────────────────────────────────────
+// POST /api/portaria/acessos/entrada/morador
+// Body: { moradorId: UUID, unidadeId: UUID, veiculoPlaca?: string, observacoes?: string }
+function modalEntradaMorador(preUnidadeId) {
+  const unidades = window._portUnidades || [];
+  openModal('Entrada de Morador', `
+    <div class="form-group"><label>Unidade</label>
+      <select id="pm-unidade">
+        <option value="">— Selecione —</option>
+        ${unidades.map(u=>`<option value="${u.id}" ${u.id===preUnidadeId?'selected':''}>Unidade ${u.numero} — Bloco ${u.bloco||'?'}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:16px">
+      <div class="form-group" style="margin:0;flex:1"><label>Buscar Morador por CPF</label>
+        <input type="text" id="pm-cpf" placeholder="12345678900" oninput="this.value=this.value.replace(/\D/g,'')">
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="buscarMoradorParaAcesso()" style="margin-bottom:0">🔍 Buscar</button>
+    </div>
+    <div id="pm-pessoa-result"></div>
+    <input type="hidden" id="pm-moradorId">
+    <div class="form-group"><label>Placa do Veículo</label><input type="text" id="pm-placa" placeholder="Opcional — ABC1D23" style="text-transform:uppercase"></div>
+    <div class="form-group"><label>Observações</label><textarea id="pm-obs" placeholder="Opcional…"></textarea></div>
+  `, async function() {
+    const moradorId  = document.getElementById('pm-moradorId').value.trim();
+    const unidadeId  = document.getElementById('pm-unidade').value;
+    if (!moradorId)  { toast('Busque e selecione o morador','error'); return; }
+    if (!unidadeId)  { toast('Selecione a unidade','error'); return; }
+    const r = await api('POST', '/api/portaria/acessos/entrada/morador', {
+      moradorId, unidadeId,
+      veiculoPlaca: document.getElementById('pm-placa').value.toUpperCase()||null,
+      observacoes:  document.getElementById('pm-obs').value||null
+    });
+    if (r.ok) { toast('Entrada do morador registrada!','success'); closeModal(); }
+    else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+  });
+}
+
+async function buscarMoradorParaAcesso() {
+  const cpf = document.getElementById('pm-cpf').value.trim();
+  if (!cpf) { toast('Digite o CPF','info'); return; }
+  const r = await api('GET', `/api/condominio/pessoas?cpf=${cpf}`);
+  const el = document.getElementById('pm-pessoa-result');
+  if (r.ok && r.data?.id) {
+    document.getElementById('pm-moradorId').value = r.data.id;
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:10px;border:2px solid var(--accent);border-radius:10px;margin-bottom:16px;background:var(--accent-light)">
+      <span style="font-size:24px">✅</span>
+      <div><strong>${r.data.nomeCompleto}</strong><br>
+      <span class="chip">${r.data.documento}</span>
+      <small style="color:#64748b;margin-left:8px">ID: ${r.data.id.substring(0,8)}…</small></div>
+    </div>`;
+  } else {
+    document.getElementById('pm-moradorId').value = '';
+    el.innerHTML = `<div class="error-state" style="margin-bottom:12px">Morador não encontrado com CPF: ${cpf}</div>`;
+  }
+}
+
+// ── PORTARIA: Encomendas ─────────────────────────────────────────
+function modalNovaEncomenda(unidadeId) {
+  openModal('Registrar Encomenda', `
+    <div class="form-group"><label>Tipo</label>
+      <select id="pe-tipo">
+        <option value="CURTO_PRAZO">Curto Prazo — iFood/Rappi (guarda 2h)</option>
+        <option value="MEDIO_PRAZO">Médio Prazo — Amazon/Mercado Livre (7 dias)</option>
+        <option value="LONGO_PRAZO">Longo Prazo — Shopee/AliExpress (30 dias)</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Descrição</label><input type="text" id="pe-desc" placeholder="Caixa grande parda"></div>
+    <div class="form-group"><label>Código de Rastreio</label><input type="text" id="pe-rastreio" placeholder="BR123456789BR (opcional)"></div>
+  `, async function() {
+    const r = await api('POST', '/api/portaria/encomendas', {
+      unidadeId, tipo: document.getElementById('pe-tipo').value,
+      descricao: document.getElementById('pe-desc').value||null,
+      codigoRastreio: document.getElementById('pe-rastreio').value||null
+    });
+    if (r.ok) { toast('Encomenda registrada!','success'); closeModal(); portTab('encomendas'); }
+    else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+  });
+}
+
+function modalRetiradaEncomenda(encomendaId) {
+  openModal('Confirmar Retirada', `
+    <div class="form-group"><label>Nome de quem retirou</label><input type="text" id="pr-nome" placeholder="João Silva"></div>
+    <div class="form-group"><label>Documento</label><input type="text" id="pr-doc" placeholder="CPF ou RG"></div>
+  `, async function() {
+    const r = await api('POST', `/api/portaria/encomendas/${encomendaId}/retirada`, {
+      nomeRetirador: document.getElementById('pr-nome').value,
+      documentoRetirador: document.getElementById('pr-doc').value
+    });
+    if (r.ok) { toast('Retirada confirmada!','success'); closeModal(); portTab('encomendas'); }
+    else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+  });
+}
+
+// ── PORTARIA: Saída ──────────────────────────────────────────────
+function modalAcessoSaida() {
+  openModal('Registrar Saída', `
+    <div class="form-group"><label>Tipo de Pessoa</label>
+      <select id="ps-tipo"><option>MORADOR</option><option>VISITANTE</option><option>FUNCIONARIO</option><option>PRESTADOR</option></select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:16px">
+      <div class="form-group" style="margin:0;flex:1"><label>Buscar por CPF (moradores)</label>
+        <input type="text" id="ps-cpf" placeholder="12345678900" oninput="this.value=this.value.replace(/\D/g,'')">
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="buscarSaidaPorCpf()">🔍</button>
+    </div>
+    <div id="ps-pessoa-result"></div>
+    <input type="hidden" id="ps-pessoaId">
+    <div class="form-group"><label>Placa do Veículo</label><input type="text" id="ps-placa" placeholder="Opcional" style="text-transform:uppercase"></div>
+    <div class="form-group"><label>Observações</label><textarea id="ps-obs" placeholder="Opcional…"></textarea></div>
+  `, async function() {
+    const pessoaId = document.getElementById('ps-pessoaId').value.trim();
+    if (!pessoaId) { toast('Busque a pessoa pelo CPF','error'); return; }
+    const r = await api('POST', '/api/portaria/acessos/saida', {
+      tipoPessoa: document.getElementById('ps-tipo').value,
+      pessoaId,
+      veiculoPlaca: document.getElementById('ps-placa').value.toUpperCase()||null,
+      observacoes: document.getElementById('ps-obs').value||null
+    });
+    if (r.ok) { toast('Saída registrada!','success'); closeModal(); }
+    else toast('Erro: '+(r.data?.detail||r.data?.message||JSON.stringify(r.data)),'error');
+  });
+}
+
+async function buscarSaidaPorCpf() {
+  const cpf = document.getElementById('ps-cpf').value.trim();
+  if (!cpf) { toast('Digite o CPF','info'); return; }
+  const r = await api('GET', `/api/condominio/pessoas?cpf=${cpf}`);
+  const el = document.getElementById('ps-pessoa-result');
+  if (r.ok && r.data?.id) {
+    document.getElementById('ps-pessoaId').value = r.data.id;
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:10px;border:2px solid var(--accent);border-radius:10px;margin-bottom:12px;background:var(--accent-light)">
+      <span>✅</span><div><strong>${r.data.nomeCompleto}</strong> <span class="chip">${r.data.documento}</span></div>
+    </div>`;
+  } else {
+    document.getElementById('ps-pessoaId').value = '';
+    el.innerHTML = `<div class="error-state" style="margin-bottom:12px">Não encontrado: ${cpf}</div>`;
+  }
+}
+</script>
+</body>
+</html>
