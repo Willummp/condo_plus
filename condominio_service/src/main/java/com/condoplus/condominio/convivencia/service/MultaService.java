@@ -7,7 +7,6 @@ import com.condoplus.condominio.convivencia.dto.NovaMultaRequest;
 import com.condoplus.condominio.convivencia.repository.MultaRepository;
 import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import com.condoplus.condominio.estrutura.repository.UnidadeRepository;
-import com.condoplus.condominio.exception.PessoaNaoEncontradaException;
 import com.condoplus.condominio.exception.UnidadeNaoEncontradaException;
 import com.condoplus.condominio.event.MultaAplicadaEvent;
 import com.condoplus.condominio.producer.CondominioEventProducer;
@@ -57,9 +56,10 @@ public class MultaService {
             throw new UnidadeNaoEncontradaException(req.unidadeId());
         }
 
+        // ADMIN do sistema pode nao ter Pessoa no condominio-service (criado apenas no IAM via seed)
         UUID pessoaId = pessoaRepository.findByCredencialId(aplicadorId)
-                .orElseThrow(() -> new PessoaNaoEncontradaException(aplicadorId))
-                .getId();
+                .map(p -> p.getId())
+                .orElse(null);
 
         Multa multa = new Multa();
         multa.setUnidadeId(AggregateReference.to(req.unidadeId()));
@@ -70,7 +70,7 @@ public class MultaService {
         multa.setDataAplicacao(LocalDateTime.now());
         multa.setDataVencimento(req.dataVencimento());
         multa.setStatus(StatusMulta.PENDENTE);
-        multa.setAplicadaPorId(AggregateReference.to(pessoaId));
+        multa.setAplicadaPorId(pessoaId != null ? AggregateReference.to(pessoaId) : null);
 
         Multa salva = multaRepository.save(multa);
         this.multasCounter.increment();

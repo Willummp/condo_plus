@@ -68,6 +68,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  health:
+    kafka:
+      enabled: false  # Kafka DOWN nao derruba o status geral do servico
 
 # Circuit Breaker para chamadas ao condominio-service
 resilience4j:

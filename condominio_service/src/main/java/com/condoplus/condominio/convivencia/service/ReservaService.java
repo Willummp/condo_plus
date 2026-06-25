@@ -112,10 +112,20 @@ public class ReservaService {
         log.info("Reserva cancelada. id={}", reservaId);
     }
 
-    
+
     @Transactional(readOnly = true)
     public List<ReservaResponse> listar(UUID areaComumId, java.time.LocalDate data) {
         return reservaRepository.findByAreaComumEData(areaComumId, data).stream()
+            .map(r -> ReservaResponse.fromEntity(r, null))
+            .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReservaResponse> listarPorMorador(UUID credencialId) {
+        UUID pessoaId = pessoaRepository.findByCredencialId(credencialId)
+                .orElseThrow(() -> new PessoaNaoEncontradaException(credencialId))
+                .getId();
+        return reservaRepository.findByMorador(pessoaId).stream()
             .map(r -> ReservaResponse.fromEntity(r, null))
             .toList();
     }

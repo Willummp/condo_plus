@@ -17,19 +17,26 @@ public class CondominioWebClient {
         this.webClient = webClient;
     }
 
-    public Flux<UUID> listarPessoasDaUnidade(UUID unidadId) {
-        log.info("Chamando CONDOMINIO-SERVICE via WebClient para unidadeId={}", unidadId);
+    /**
+     * Retorna os credencialIds (IAM UUID) dos moradores ativos de uma unidade.
+     * Chama o condominio-service diretamente (service-to-service via Eureka/LB).
+     * O path deve bater com o controller do condominio-service (sem prefixo /api/).
+     */
+    public Flux<UUID> listarPessoasDaUnidade(UUID unidadeId) {
+        log.info("Chamando CONDOMINIO-SERVICE via WebClient para unidadeId={}", unidadeId);
         return webClient.get()
-                .uri("lb://condominio-service/api/unidades/{id}/pessoas", unidadId)
+                .uri("lb://condominio-service/condominio/unidades/{id}/moradores/credenciais", unidadeId)
                 .retrieve()
-                .bodyToFlux(UUID.class);
+                .bodyToFlux(UUID.class)
+                .onErrorResume(ex -> {
+                    log.warn("Falha ao buscar credenciais da unidade {}: {}", unidadeId, ex.getMessage());
+                    return Flux.empty();
+                });
     }
 
     public Flux<UUID> listarTodosMoradoresAtivos() {
         log.info("Chamando CONDOMINIO-SERVICE via WebClient para listar todos moradores ativos");
-        return webClient.get()
-                .uri("lb://condominio-service/api/moradores/ativos")
-                .retrieve()
-                .bodyToFlux(UUID.class);
+        // Endpoint nao implementado — retorna vazio de forma segura
+        return Flux.empty();
     }
 }

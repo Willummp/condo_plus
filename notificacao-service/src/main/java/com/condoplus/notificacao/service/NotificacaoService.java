@@ -76,8 +76,18 @@ public class NotificacaoService {
     }
 
     private Flux<Notificacao> processarParaDestinatario(EventoNotificacao evento, UUID pessoaId) {
+        // Busca preferências do usuário. Se não houver nenhuma, cria uma notificação
+        // IN_APP por padrão para garantir que o evento chegue ao frontend.
         return preferenciaRepository
                 .findByPessoaIdAndTipoEventoAndAtivaTrue(pessoaId, evento.tipoEvento())
+                .switchIfEmpty(Flux.defer(() -> {
+                    log.debug("Sem preferências para pessoaId={} tipo={}. Usando canal IN_APP padrão.",
+                            pessoaId, evento.tipoEvento());
+                    com.condoplus.notificacao.domain.PreferenciaNotificacao padrao =
+                            new com.condoplus.notificacao.domain.PreferenciaNotificacao();
+                    padrao.setCanal(Canal.IN_APP);
+                    return Flux.just(padrao);
+                }))
                 .flatMap(pref -> criarOuRecuperarNotificacao(evento, pessoaId, pref.getCanal()))
                 .flatMap(notif -> despacharSeNova(notif));
     }

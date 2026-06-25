@@ -72,6 +72,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  health:
+    kafka:
+      enabled: false
 
 # ─── Resilience4j — Circuit Breaker para o iam-service ──────────
 # Parâmetros da Seção 13.5 do Plano de Execução

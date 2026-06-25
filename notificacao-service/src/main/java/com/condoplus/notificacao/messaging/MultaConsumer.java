@@ -48,10 +48,12 @@ public class MultaConsumer {
 
     private UUID extrairUnidadeId(String raw) {
         try {
-            Map<?, ?> envelope = objectMapper.readValue(raw, Map.class);
-            Map<?, ?> payload = (Map<?, ?>) envelope.get("payload");
-            if (payload != null && payload.get("unidadeId") != null) {
-                return UUID.fromString(payload.get("unidadeId").toString());
+            Map<?, ?> map = objectMapper.readValue(raw, Map.class);
+            // O CondominioEventProducer publica MultaAplicadaEvent diretamente (JSON flat),
+            // com unidadeId na raiz: { "id":"...", "unidadeId":"...", ... }
+            Object val = map.get("unidadeId");
+            if (val != null) {
+                return UUID.fromString(val.toString());
             }
         } catch (Exception e) {
             log.warn("Nao foi possivel extrair unidadeId do payload de multa: {}", e.getMessage());
