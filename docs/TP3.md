@@ -155,7 +155,7 @@ Todos os endpoints do `condominio-service` são protegidos e exigem um Bearer To
 | `/api/condominio/unidades` | `POST` | `SINDICO`, `ADMIN` |
 | `/api/condominio/unidades/{id}` | `GET` | Qualquer usuário autenticado |
 | `/api/condominio/unidades/{id}/vinculacoes` | `POST` | `SINDICO`, `ADMIN` |
-| `/api/condominio/comunicados` | `POST` | `SINDICO` |
+| `/api/condominio/comunicados` | `POST` | `SINDICO`, `ADMIN` |
 | `/api/condominio/pessoas/{id}` | `GET` | Qualquer usuário autenticado |
 
 ---

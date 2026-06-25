@@ -45,12 +45,18 @@ public class ReservaController {
         return ResponseEntity.noContent().build();
     }
 
-    
+
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ReservaResponse>> listar(
-            @RequestParam UUID areaComumId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
-        return ResponseEntity.ok(reservaService.listar(areaComumId, data));
+            @RequestParam(required = false) UUID areaComumId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
+            Authentication auth) {
+        if (areaComumId != null && data != null) {
+            return ResponseEntity.ok(reservaService.listar(areaComumId, data));
+        }
+        // sem filtros: retorna reservas do morador logado
+        UUID moradorId = UUID.fromString(auth.getName());
+        return ResponseEntity.ok(reservaService.listarPorMorador(moradorId));
     }
 }

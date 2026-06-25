@@ -23,7 +23,7 @@ public class ComunicadoController {
 
     
     @PostMapping
-    @PreAuthorize("hasRole('SINDICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SINDICO')")
     public ResponseEntity<ComunicadoResponse> publicar(
             @Valid @RequestBody NovoComunicadoRequest req,
             Authentication auth) {
@@ -36,7 +36,7 @@ public class ComunicadoController {
 
     
     @PostMapping("/bloco/{bloco}")
-    @PreAuthorize("hasRole('SINDICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SINDICO')")
     public ResponseEntity<ComunicadoResponse> publicarParaBloco(
             @Valid @RequestBody NovoComunicadoRequest req,
             @PathVariable String bloco,

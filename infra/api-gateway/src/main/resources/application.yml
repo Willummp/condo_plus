@@ -6,6 +6,20 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: false
+            maxAge: 3600
       discovery:
         locator:
           enabled: true
@@ -56,13 +70,15 @@ spring:
             - name: JwtAuthenticationFilter
 
 
-        # Rotas para o notificacao-service
+        # Notificacao — StripPrefix=1 remove /api
+        # /api/notificacoes/minhas → /notificacoes/minhas
+        # /api/notificacoes/actuator/health → /notificacoes/actuator/health
         - id: notificacao-service
           uri: lb://notificacao-service
           predicates:
-            - Path=/api/notificacao/**
+            - Path=/api/notificacoes/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=1
             - name: JwtAuthenticationFilter
 
 eureka:

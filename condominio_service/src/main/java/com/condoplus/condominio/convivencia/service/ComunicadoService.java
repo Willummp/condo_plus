@@ -10,7 +10,6 @@ import com.condoplus.condominio.producer.CondominioEventProducer;
 import com.condoplus.condominio.estrutura.repository.PessoaRepository;
 import org.slf4j.MDC;
 import com.condoplus.condominio.estrutura.domain.Pessoa;
-import com.condoplus.condominio.exception.PessoaNaoEncontradaException;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.StreamSupport;
 
 @Service
 @Slf4j
@@ -49,14 +47,16 @@ public class ComunicadoService {
     public ComunicadoResponse publicar(NovoComunicadoRequest req, UUID autorId) {
         log.info("Publicando comunicado: titulo={}, autorId={}", req.titulo(), autorId);
 
-        Pessoa autor = pessoaRepository.findByCredencialId(autorId)
-                .orElseThrow(() -> new PessoaNaoEncontradaException(autorId));
+        // ADMIN do sistema pode nao ter Pessoa no condominio-service (criado apenas no IAM via seed)
+        UUID pessoaId = pessoaRepository.findByCredencialId(autorId)
+                .map(Pessoa::getId)
+                .orElse(null);
 
         Comunicado comunicado = new Comunicado();
         comunicado.setTitulo(req.titulo());
         comunicado.setMensagem(req.conteudo());
         comunicado.setPublicoAlvo(req.visibilidade());
-        comunicado.setAutorId(AggregateReference.to(autor.getId()));
+        comunicado.setAutorId(pessoaId != null ? AggregateReference.to(pessoaId) : null);
         comunicado.setDataPublicacao(LocalDateTime.now());
 
         if (req.visibilidade() == PublicoAlvo.BLOCO_ESPECIFICO) {
@@ -85,8 +85,10 @@ public class ComunicadoService {
     public ComunicadoResponse publicarParaBloco(NovoComunicadoRequest req, UUID autorId, String bloco) {
         log.info("Publicando comunicado para bloco: titulo={}, bloco={}, autorId={}", req.titulo(), bloco, autorId);
 
-        Pessoa autor = pessoaRepository.findByCredencialId(autorId)
-                .orElseThrow(() -> new PessoaNaoEncontradaException(autorId));
+        // ADMIN do sistema pode nao ter Pessoa no condominio-service (criado apenas no IAM via seed)
+        UUID pessoaId = pessoaRepository.findByCredencialId(autorId)
+                .map(Pessoa::getId)
+                .orElse(null);
 
         if (bloco == null || bloco.isBlank()) {
             throw new IllegalArgumentException("O bloco destino deve ser fornecido quando visibilidade é BLOCO_ESPECIFICO.");
@@ -97,7 +99,7 @@ public class ComunicadoService {
         comunicado.setMensagem(req.conteudo());
         comunicado.setPublicoAlvo(PublicoAlvo.BLOCO_ESPECIFICO);
         comunicado.setBlocoAlvo(bloco.toUpperCase().trim());
-        comunicado.setAutorId(AggregateReference.to(autor.getId()));
+        comunicado.setAutorId(pessoaId != null ? AggregateReference.to(pessoaId) : null);
         comunicado.setDataPublicacao(LocalDateTime.now());
 
         Comunicado salvo = comunicadoRepository.save(comunicado);
