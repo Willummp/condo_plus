@@ -59,7 +59,7 @@ jobs:
       #                                declarado no POM filho.
       # verify : roda compile + testes (surefire). O teste sobe MongoDB embarcado
       #          (flapdoodle) em memoria, sem precisar de Docker no runner.
-      - name: Build e testes do auditoria-service
-        run: mvn -B -f auditoria_service/pom.xml verify
       - name: Instalar o starter de observabilidade no repositorio local
         run: mvn -B -f infra/condoplus-observability-starter/pom.xml install -DskipTests
+      - name: Build e testes do auditoria-service
+        run: mvn -B -f auditoria_service/pom.xml verify
