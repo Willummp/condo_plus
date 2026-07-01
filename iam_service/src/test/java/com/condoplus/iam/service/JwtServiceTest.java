@@ -10,6 +10,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -54,7 +55,9 @@ class JwtServiceTest {
         assertThat(claims.get("email"))
                 .isEqualTo("teste@condo.com");
 
-        assertThat(claims.get("roles", java.util.List.class))
+        @SuppressWarnings("unchecked")
+        List<String> roles = claims.get("roles", List.class);
+        assertThat(roles)
                 .containsExactly("MORADOR");
 
         assertThat(claims.getIssuer())
