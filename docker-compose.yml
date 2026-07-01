@@ -339,17 +339,22 @@ services:
       - "9090:9090"
     volumes:
       - ./infra/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/observability/prometheus/rules:/etc/prometheus/rules:ro
       - condoplus_prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=7d'
       - '--web.enable-lifecycle'
+    depends_on:
+      eureka:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1" ]
       interval: 15s
       timeout: 5s
       retries: 5
+
 
   # ── Grafana (dashboards) ─────────────────────────────────────────
   grafana:
@@ -362,13 +367,16 @@ services:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
       GF_USERS_ALLOW_SIGN_UP: "false"
+      # Instala o dashboard 4701 (JVM Micrometer) e o 19004 (Spring Boot 3)
+      # da comunidade automaticamente no startup.
+      GF_INSTALL_PLUGINS: ""
     volumes:
       - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro   # ← novo
       - condoplus_grafana_data:/var/lib/grafana
     depends_on:
       prometheus:
         condition: service_healthy
-
 
 volumes:
   condoplus_postgres_data:

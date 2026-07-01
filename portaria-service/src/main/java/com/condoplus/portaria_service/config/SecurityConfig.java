@@ -39,7 +39,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         // Actuator aberto para health checks da infra
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         // Tudo o mais exige autenticação;
                         // as regras finas (ROLE_PORTEIRO, ROLE_SINDICO) ficam nos @PreAuthorize
                         .anyRequest().authenticated()

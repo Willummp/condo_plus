@@ -1,0 +1,22 @@
+# =============================================================================
+# Provisionamento de dashboards do Grafana
+# =============================================================================
+# Este arquivo diz ao Grafana: "leia todos os JSONs em /var/lib/grafana/dashboards
+# e mantenha-os sincronizados". Alteracoes feitas pela UI serao sobrescritas na
+# proxima leitura (updateIntervalSeconds), garantindo que o repo seja a fonte da verdade.
+# =============================================================================
+
+apiVersion: 1
+
+providers:
+  - name: 'Condoplus'
+    orgId: 1
+    folder: 'Condo+'
+    folderUid: 'condoplus'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: true

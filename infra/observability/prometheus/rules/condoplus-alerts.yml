@@ -1,0 +1,112 @@
+# =============================================================================
+# Regras de alerta do Condo+
+# =============================================================================
+# Os alertas sao AVALIADOS pelo Prometheus mas nao sao NOTIFICADOS enquanto
+# o Alertmanager nao entrar (Fase 4). Voce pode ver o estado em:
+#   http://localhost:9090/alerts
+#
+# Boas praticas aplicadas:
+#  - Todo alerta tem `for:` (evita disparo por spike momentaneo).
+#  - Severity 'warning' ou 'critical' para roteamento futuro no Alertmanager.
+#  - Labels 'application' e 'instance' propagadas para identificar o culpado.
+# =============================================================================
+
+groups:
+
+  # -----------------------------------------------------------------------
+  # Disponibilidade
+  # -----------------------------------------------------------------------
+  - name: condoplus-availability
+    interval: 30s
+    rules:
+
+      - alert: ServicoFora
+        # 'up' e uma metrica sintetica do Prometheus: 1 quando o scrape teve
+        # sucesso, 0 quando falhou. Filtramos pelo tier 'application' para
+        # nao alertar em cima de infra que pode reiniciar mais frequentemente.
+        expr: up{tier="application"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Servico {{ $labels.application }} esta fora"
+          description: "O Prometheus nao consegue coletar metricas de {{ $labels.instance }} ha mais de 1 minuto."
+
+  # -----------------------------------------------------------------------
+  # Latencia e taxa de erro HTTP
+  # -----------------------------------------------------------------------
+  - name: condoplus-http
+    interval: 30s
+    rules:
+
+      - alert: TaxaErroHttp5xxAlta
+        # Fracao de requests com status 5xx nos ultimos 5 min > 5%.
+        # http_server_requests_seconds_count e a metrica padrao do Actuator.
+        expr: |
+          (
+            sum by (application) (rate(http_server_requests_seconds_count{status=~"5..",tier="application"}[5m]))
+            /
+            sum by (application) (rate(http_server_requests_seconds_count{tier="application"}[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Taxa de erro 5xx alta em {{ $labels.application }}"
+          description: "Mais de 5% das requests em {{ $labels.application }} retornaram 5xx nos ultimos 5 minutos."
+
+      - alert: LatenciaP95Alta
+        # histogram_quantile calcula p95 a partir do histograma
+        # que o starter ja habilita (management.metrics.distribution.percentiles-histogram).
+        expr: |
+          histogram_quantile(0.95,
+            sum by (application, le) (rate(http_server_requests_seconds_bucket{tier="application"}[5m]))
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 de latencia HTTP alta em {{ $labels.application }}"
+          description: "p95 acima de 2s por 5 minutos em {{ $labels.application }} (valor atual: {{ $value | humanizeDuration }})."
+
+  # -----------------------------------------------------------------------
+  # JVM
+  # -----------------------------------------------------------------------
+  - name: condoplus-jvm
+    interval: 30s
+    rules:
+
+      - alert: HeapAlto
+        # jvm_memory_used_bytes / jvm_memory_max_bytes na area heap.
+        # 'area' e uma tag da propria metrica do Micrometer.
+        expr: |
+          (
+            sum by (application, instance) (jvm_memory_used_bytes{area="heap",tier="application"})
+            /
+            sum by (application, instance) (jvm_memory_max_bytes{area="heap",tier="application"})
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Heap acima de 85% em {{ $labels.application }}"
+          description: "{{ $labels.instance }} esta usando mais de 85% do heap ha 5 minutos. Verificar leak ou aumentar -Xmx."
+
+  # -----------------------------------------------------------------------
+  # Kafka
+  # -----------------------------------------------------------------------
+  - name: condoplus-kafka
+    interval: 30s
+    rules:
+
+      - alert: ConsumerLagAlto
+        # kafka_consumer_fetch_manager_records_lag: soma de records atrasados
+        # entre a posicao atual do consumer e o final do topic.
+        expr: |
+          sum by (application, client_id, topic) (kafka_consumer_fetch_manager_records_lag) > 1000
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Consumer Kafka atrasado em {{ $labels.application }}"
+          description: "Lag > 1000 msgs no topico {{ $labels.topic }} (client_id={{ $labels.client_id }}) ha 3 min."
