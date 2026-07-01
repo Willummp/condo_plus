@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: auditoria-service
+  config:
+    import: classpath:application-observability.yml
   data:
     mongodb:
       uri: ${MONGO_URI:mongodb://localhost:27017/condoplus_auditoria}
@@ -32,15 +34,9 @@ eureka:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${random.uuid}
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-
 logging:
   pattern:
-    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSS} %-5level [corrId=%X{correlationId:-}] [%thread] %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [CID=%X{correlationId:-},trace=%X{traceId:-},span=%X{spanId:-}] - %msg%n"
   level:
     root: INFO
     com.condoplus.auditoria: DEBUG

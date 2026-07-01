@@ -28,4 +28,4 @@ jobs:
           cache: 'maven'
 
       - name: Run Tests (condominio_service)
-        run: mvn test -pl condominio_service
+        run: mvn test -pl condominio_service -am

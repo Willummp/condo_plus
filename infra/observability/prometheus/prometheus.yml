@@ -1,0 +1,78 @@
+# =============================================================================
+# Prometheus - Fase 2 do Condo+ (versao corrigida)
+# =============================================================================
+# Usa `eureka_sd_configs` NATIVO do Prometheus. Sem adapter, sem container extra.
+# O Prometheus consulta a REST API do Eureka diretamente e mantem os targets
+# em sync com quem esta registrado.
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: dev
+    project: condoplus
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+# Alertmanager: Fase 4.
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
+scrape_configs:
+
+  # -------------------------------------------------------------------------
+  # Self-monitoring
+  # -------------------------------------------------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # -------------------------------------------------------------------------
+  # Microsservicos Condo+ via Eureka SD
+  # -------------------------------------------------------------------------
+  # O Prometheus consulta http://eureka:8761/eureka/apps periodicamente e
+  # descobre todos os servicos registrados. Subir novo servico = alvo aparece
+  # sozinho em ate refresh_interval segundos.
+  - job_name: 'condoplus-services'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+
+    eureka_sd_configs:
+      - server: http://eureka:8761/eureka
+        refresh_interval: 15s
+
+    relabel_configs:
+      # 1. Nome da app do Eureka (ex.: IAM-SERVICE) vira label 'application'.
+      - source_labels: [__meta_eureka_app_name]
+        target_label: application
+
+      # 2. Instance = hostname:porta (mais legivel que IP cru).
+      - source_labels: [__meta_eureka_app_instance_hostname, __meta_eureka_app_instance_port]
+        separator: ':'
+        target_label: instance
+
+      # 3. Tag para separar aplicacao de infra nas queries.
+      - target_label: tier
+        replacement: application
+
+      # 4. Ignorar instancias que nao estejam UP no Eureka.
+      - source_labels: [__meta_eureka_app_instance_status]
+        regex: UP
+        action: keep
+
+  # -------------------------------------------------------------------------
+  # Eureka server: metricas do proprio discovery
+  # -------------------------------------------------------------------------
+  - job_name: 'condoplus-infra'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'eureka:8761'
+        labels:
+          tier: 'infrastructure'
+          application: 'eureka-server'

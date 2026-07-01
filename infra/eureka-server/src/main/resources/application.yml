@@ -5,6 +5,9 @@ spring:
   application:
     name: eureka-server
 
+  config:
+    import: classpath:application-observability.yml
+
 eureka:
   instance:
     hostname: localhost

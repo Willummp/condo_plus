@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: condominio-service  # nome registrado no Eureka
+  config:
+    import: classpath:application-observability.yml
+
 
   datasource:
     # currentSchema=condominio garante que queries sem schema explícito
@@ -63,19 +66,6 @@ eureka:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${random.uuid}
 
-# ─── Actuator ───────────────────────────────────────────────────
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      show-details: when-authorized
-  health:
-    kafka:
-      enabled: false
-
 # ─── Resilience4j — Circuit Breaker para o iam-service ──────────
 # Parâmetros da Seção 13.5 do Plano de Execução
 resilience4j:
@@ -104,7 +94,7 @@ condoplus:
 # ─── Logging ────────────────────────────────────────────────────
 logging:
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [CID=%X{correlationId}] - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [CID=%X{correlationId:-},trace=%X{traceId:-},span=%X{spanId:-}] - %msg%n"
   level:
     root: INFO
     com.condoplus.condominio: DEBUG

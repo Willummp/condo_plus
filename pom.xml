@@ -31,6 +31,7 @@
         <module>auditoria_service</module>
         <module>infra/eureka-server</module>
         <module>infra/api-gateway</module>
+        <module>infra/condoplus-observability-starter</module>
     </modules>
 
     <properties>

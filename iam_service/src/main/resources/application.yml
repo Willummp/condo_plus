@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: iam-service
+  config:
+    import: classpath:application-observability.yml
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
@@ -45,16 +47,6 @@ eureka:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${random.uuid}
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-
-  endpoint:
-    health:
-      show-details: when-authorized
-
 condoplus:
   jwt:
     secret: ${JWT_SECRET:CondoPlusSuperSecretKeyForJWTAuth2026!}
@@ -67,6 +59,8 @@ condoplus:
     lockout-duration-minutes: 15
 
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [CID=%X{correlationId:-},trace=%X{traceId:-},span=%X{spanId:-}] - %msg%n"
   level:
     root: INFO
     com.condoplus.iam: DEBUG

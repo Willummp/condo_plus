@@ -16,11 +16,13 @@ on:
     branches: [ "**" ]
     paths:
       - "auditoria_service/**"
+      - "infra/condoplus-observability-starter/**"
       - "pom.xml"
       - ".github/workflows/auditoria-service-ci.yml"
   pull_request:
     paths:
       - "auditoria_service/**"
+      - "infra/condoplus-observability-starter/**"
       - "pom.xml"
       - ".github/workflows/auditoria-service-ci.yml"
 
@@ -58,4 +60,4 @@ jobs:
       # verify : roda compile + testes (surefire). O teste sobe MongoDB embarcado
       #          (flapdoodle) em memoria, sem precisar de Docker no runner.
       - name: Build e testes do auditoria-service
-        run: mvn -B -f auditoria_service/pom.xml verify
+        run: mvn -B -pl auditoria_service -am verify

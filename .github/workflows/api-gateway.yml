@@ -28,4 +28,4 @@ jobs:
           cache: 'maven'
 
       - name: Run Tests (api-gateway)
-        run: mvn test -pl infra/api-gateway
+        run: mvn test -pl infra/api-gateway -am

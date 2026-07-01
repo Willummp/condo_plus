@@ -28,4 +28,4 @@ jobs:
           cache: 'maven'
 
       - name: Run Tests (eureka-server)
-        run: mvn test -pl infra/eureka-server
+        run: mvn test -pl infra/eureka-server -am

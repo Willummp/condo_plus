@@ -170,6 +170,12 @@
 			<artifactId>spring-kafka</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.condoplus</groupId>
+			<artifactId>condoplus-observability-starter</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
 		<!-- Módulo comum de eventos (se já tiver criado, se não, veja a nota abaixo) -->
 		<!-- <dependency>
 			<groupId>com.condoplus</groupId>
