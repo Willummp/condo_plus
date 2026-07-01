@@ -16,11 +16,13 @@ on:
     branches: [ "**" ]
     paths:
       - "auditoria_service/**"
+      - "infra/condoplus-observability-starter/**"
       - "pom.xml"
       - ".github/workflows/auditoria-service-ci.yml"
   pull_request:
     paths:
       - "auditoria_service/**"
+      - "infra/condoplus-observability-starter/**"
       - "pom.xml"
       - ".github/workflows/auditoria-service-ci.yml"
 
@@ -59,3 +61,5 @@ jobs:
       #          (flapdoodle) em memoria, sem precisar de Docker no runner.
       - name: Build e testes do auditoria-service
         run: mvn -B -f auditoria_service/pom.xml verify
+      - name: Instalar o starter de observabilidade no repositorio local
+        run: mvn -B -f infra/condoplus-observability-starter/pom.xml install -DskipTests
