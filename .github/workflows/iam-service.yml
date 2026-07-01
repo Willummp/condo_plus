@@ -28,7 +28,7 @@ jobs:
           cache: 'maven'
 
       - name: Unit Tests (iam_service)
-        run: mvn test -pl iam_service
+        run: mvn test -pl iam_service -am
 
       - name: Integration Tests (iam_service)
         run: mvn failsafe:integration-test failsafe:verify -pl iam_service
