@@ -1,0 +1,79 @@
+# =============================================================================
+# Defaults de observabilidade do Condo+
+# =============================================================================
+# Carregado por cada microsservico atraves de:
+#   spring:
+#     config:
+#       import: classpath:application-observability.yml
+#
+# Qualquer propriedade aqui pode ser sobrescrita no application-observability.yml do servico
+# ou via variavel de ambiente. Mantenha este arquivo livre de configs
+# especificas de um servico em particular.
+# =============================================================================
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expomos prometheus para scrape, alem dos endpoints usuais.
+        # info: customize via management.info.* em cada servico.
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true  # liveness/readiness separadas (uteis para K8s/compose healthchecks)
+
+  metrics:
+    tags:
+      # Aplicado a TODAS as metricas. Permite filtrar por servico no Prometheus/Grafana.
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+
+  tracing:
+    enabled: true
+    sampling:
+      # 1.0 = traceia 100% das requisicoes. Bom para dev/academico.
+      # Em producao, reduzir para 0.1 ou usar sampling adaptativo (Fase 4).
+      probability: ${CONDOPLUS_TRACING_SAMPLING:1.0}
+    propagation:
+      # Aceita ambos os formatos no consumo (entrada) e propaga em ambos na saida.
+      # w3c = traceparent (padrao moderno); b3 = legado do Brave/Sleuth.
+      # Util enquanto convivemos com possiveis clientes antigos ou ferramentas variadas.
+      type: w3c,b3
+
+  zipkin:
+    tracing:
+      # Endpoint configuravel por ambiente. No docker-compose apontamos para http://zipkin:9411/api/v2/spans.
+      # Em dev local fora do compose, deixa o default localhost:9411.
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+
+# ---------------------------------------------------------------------------
+# Logs correlacionados
+# ---------------------------------------------------------------------------
+# Com tracing ativo, o Spring Boot 3 ja injeta traceId/spanId no MDC.
+# Aqui apenas garantimos um padrao consistente entre todos os servicos.
+logging:
+  pattern:
+    correlation: "[${spring.application.name:-app},%X{traceId:-},%X{spanId:-}] "
+  level:
+    # Evita ruido excessivo do SDK do OTel em INFO/DEBUG geral.
+    io.opentelemetry: INFO
+
+# ---------------------------------------------------------------------------
+# Observability automatica para Kafka
+# ---------------------------------------------------------------------------
+# A propagacao de contexto em mensageria nao acontece por padrao: precisamos
+# ligar a instrumentacao do spring-kafka explicitamente. Com isto:
+#  - Producer cria um span por send() e injeta os headers W3C/B3 na mensagem.
+#  - Listener cria um span por record consumido, continuando o trace do producer.
+spring:
+  kafka:
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true

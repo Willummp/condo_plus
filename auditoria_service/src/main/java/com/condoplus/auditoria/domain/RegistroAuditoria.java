@@ -88,7 +88,7 @@ public class RegistroAuditoria {
      *
      * @Indexed com expireAfterSeconds = 365 dias = TTL nativo do MongoDB.
      * Thread interna do servidor apaga documentos antigos automaticamente.
-     * Em produccao real, esse valor sairia de application.yml.
+     * Em produccao real, esse valor sairia de application-observability.yml.
      */
     @Indexed(name = "idx_timestamp_ttl", expireAfterSeconds = 31_536_000)
     @Field("timestamp")

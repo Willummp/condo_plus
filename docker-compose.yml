@@ -132,12 +132,15 @@ services:
       IAM_DB_PASSWORD: condominio_password
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EUREKA_URL: http://eureka:8761/eureka
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
       postgres:
         condition: service_healthy
       eureka:
         condition: service_healthy
       kafka:
+        condition: service_healthy
+      zipkin:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:8081/actuator/health || exit 1"]
@@ -162,6 +165,7 @@ services:
       CONDOMINIO_DB_PASSWORD: condominio_password
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EUREKA_URL: http://eureka:8761/eureka
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
       postgres:
         condition: service_healthy
@@ -170,6 +174,8 @@ services:
       kafka:
         condition: service_healthy
       iam:
+        condition: service_healthy
+      zipkin:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:8082/actuator/health || exit 1"]
@@ -196,6 +202,7 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       KAFKA_BOOTSTRAP: kafka:9092
       EUREKA_URL: http://eureka:8761/eureka
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
       postgres:
         condition: service_healthy
@@ -204,6 +211,8 @@ services:
       eureka:
         condition: service_healthy
       kafka:
+        condition: service_healthy
+      zipkin:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:8083/actuator/health || exit 1"]
@@ -229,6 +238,7 @@ services:
       SPRING_FLYWAY_URL: jdbc:postgresql://postgres:5432/condoplus?currentSchema=notificacao
       KAFKA_BOOTSTRAP: kafka:9092
       EUREKA_URL: http://eureka:8761/eureka
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
       postgres:
         condition: service_healthy
@@ -237,6 +247,8 @@ services:
       eureka:
         condition: service_healthy
       kafka:
+        condition: service_healthy
+      zipkin:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:8084/actuator/health || exit 1"]
@@ -259,12 +271,15 @@ services:
       MONGO_URI: mongodb://mongo:27017/condoplus_auditoria
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EUREKA_URL: http://eureka:8761/eureka
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
       mongo:
         condition: service_healthy
       eureka:
         condition: service_healthy
       kafka:
+        condition: service_healthy
+      zipkin:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:8085/actuator/health || exit 1"]
@@ -285,8 +300,11 @@ services:
       - "8080:8080"
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
       eureka:
+        condition: service_healthy
+      zipkin:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
@@ -295,8 +313,68 @@ services:
       retries: 10
       start_period: 60s
 
+  zipkin:
+    image: openzipkin/zipkin:3
+    container_name: condoplus-zipkin
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+    environment:
+      # Armazenamento in-memory. Para persistir, trocar STORAGE_TYPE para 'elasticsearch'
+      # ou 'cassandra' na Fase 4.
+      STORAGE_TYPE: mem
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:9411/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── Prometheus (metrics scraper) ─────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    container_name: condoplus-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - condoplus_prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Grafana (dashboards) ─────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: condoplus-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - condoplus_grafana_data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+
+
 volumes:
   condoplus_postgres_data:
   condoplus_mongo_data:
   condoplus_kafka_data:
   condoplus_redis_data:
+  condoplus_prometheus_data:
+  condoplus_grafana_data:
+

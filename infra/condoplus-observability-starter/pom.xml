@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        Starter interno do Condo+:
+        - Tracing: Micrometer Observation -> OpenTelemetry SDK -> Zipkin (Fase 1).
+          Trocaremos o exporter por OTLP quando subirmos o OTel Collector (Fase 3).
+        - Metrics: Micrometer -> formato Prometheus, exposto em /actuator/prometheus.
+        - Logs: padrao de correlacao com traceId/spanId herdado via application-observability.yml.
+
+        Como consumir: cada microsservico declara este modulo como dependencia
+        e adiciona em seu application-observability.yml:
+
+            spring:
+              config:
+                import: classpath:application-observability.yml
+    -->
+    <parent>
+        <groupId>com.condoplus</groupId>
+        <artifactId>condo-plus</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>condoplus-observability-starter</artifactId>
+    <name>condoplus-observability-starter</name>
+    <description>Starter interno do Condo+: tracing (OTel-Zipkin), metricas (Prometheus) e logs correlacionados.</description>
+
+    <dependencies>
+        <!-- Endpoints /actuator/health, /actuator/metrics, /actuator/prometheus, etc. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Ponte da Observation API do Micrometer para o SDK do OpenTelemetry.
+             Esta dependencia carrega o opentelemetry-api/sdk como transitivas. -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-otel</artifactId>
+        </dependency>
+
+        <!-- Exporter direto do SDK OTel para o Zipkin (formato JSON v2).
+             Sera substituido por opentelemetry-exporter-otlp na Fase 3. -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-zipkin</artifactId>
+        </dependency>
+
+        <!-- Registry do Micrometer que serializa as metricas no formato esperado
+             pelo Prometheus (text exposition format). -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- Gera metadados (spring-configuration-metadata.json) para as
+             @ConfigurationProperties do starter, ativando autocomplete no IDE. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+</project>

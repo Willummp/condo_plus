@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: portaria-service
+  config:
+    import: classpath:application-observability.yml
 
   # Perfil ativo definido por variável de ambiente ou flag de startup
   # Não fixar 'dev' aqui — cada ambiente sobe com -Dspring.profiles.active=xxx
@@ -112,6 +114,8 @@ condoplus:
       encomendas-retiradas: portaria.encomendas.retiradas
 
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [CID=%X{correlationId:-},trace=%X{traceId:-},span=%X{spanId:-}] - %msg%n"
   level:
     root: INFO
     com.condoplus.portaria_service: DEBUG

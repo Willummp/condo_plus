@@ -1,0 +1,19 @@
+# =============================================================================
+# Provisionamento automatico do datasource Prometheus no Grafana
+# =============================================================================
+# O Grafana le este arquivo no startup e cria/atualiza o datasource sem
+# precisar configurar nada na UI. Idempotente.
+# =============================================================================
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 10s
+      httpMethod: POST

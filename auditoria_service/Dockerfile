@@ -8,7 +8,9 @@ COPY portaria-service/pom.xml portaria-service/
 COPY notificacao-service/pom.xml notificacao-service/
 COPY infra/eureka-server/pom.xml infra/eureka-server/
 COPY infra/api-gateway/pom.xml infra/api-gateway/
+COPY infra/condoplus-observability-starter/pom.xml infra/condoplus-observability-starter/
 RUN mvn dependency:go-offline -pl auditoria_service -am -q --no-transfer-progress 2>/dev/null || true
+COPY infra/condoplus-observability-starter/src infra/condoplus-observability-starter/src
 COPY auditoria_service/src auditoria_service/src
 RUN mvn package -pl auditoria_service -am -DskipTests -q --no-transfer-progress
 

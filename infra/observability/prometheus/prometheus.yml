@@ -1,0 +1,44 @@
+# =============================================================================
+# Prometheus - configuracao inicial do Condo+ (Fase 1)
+# =============================================================================
+# Targets estaticos por enquanto. Na Fase 2 trocamos por service discovery
+# via Eureka (prometheus-eureka-sd ou o discovery nativo do Spring Cloud).
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: dev
+    project: condoplus
+
+scrape_configs:
+  # Self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Microsservicos Condo+ - cada um expoe /actuator/prometheus
+  - job_name: 'condoplus-services'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets:
+          - 'gateway:8080'
+          - 'iam:8081'
+          - 'condominio:8082'
+          - 'portaria:8083'
+          - 'notificacao:8084'
+          - 'auditoria:8085'
+        labels:
+          tier: 'application'
+
+  # Eureka server tambem expoe metricas
+  - job_name: 'condoplus-infra'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'eureka:8761'
+        labels:
+          tier: 'infrastructure'
